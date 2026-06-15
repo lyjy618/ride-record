@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>跑车记录 - 手动记录版</title>
+  <title>跑车记录</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f0f2f5}
@@ -17,23 +17,10 @@
     .btn-green{background:#52c41a;color:#fff}
     .btn-red{background:#ff4d4f;color:#fff}
     .btn-gray{background:#f5f5f5;color:#666}
-    .rec-btn{border:none;border-radius:16px;font-size:14px;font-weight:600;color:#fff;cursor:pointer;padding:14px 20px;width:calc(50% - 12px)}
+    .rec-btn{border:none;border-radius:16px;font-size:14px;font-weight:600;color:#fff;cursor:pointer;padding:14px 16px;flex:1}
     .btn-up{background:linear-gradient(135deg,#52c41a,#73d13d)}
     .btn-down{background:linear-gradient(135deg,#ff4d4f,#ff7875)}
     .empty-state{text-align:center;padding:32px;color:#999}
-    /* 模态框 */
-    .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:1000;padding:16px}
-    .modal-box{background:#fff;border-radius:16px;padding:24px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto}
-    .modal-title{font-size:18px;font-weight:700;margin-bottom:20px;text-align:center}
-    .modal-row{margin-bottom:16px}
-    .modal-label{font-size:13px;color:#666;margin-bottom:6px}
-    .modal-input{width:100%;border:1.5px solid #e0e0e0;border-radius:10px;padding:12px;font-size:15px;box-sizing:border-box}
-    .modal-input:focus{border-color:#1677ff;outline:none}
-    .modal-time{display:flex;gap:8px}
-    .modal-time input{flex:1;border:1.5px solid #e0e0e0;border-radius:10px;padding:12px;font-size:15px;box-sizing:border-box}
-    .modal-btns{display:flex;gap:10px;margin-top:20px}
-    .modal-btns button{flex:1;padding:14px;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer}
-    /* 收支卡片 */
     .inc-card{background:linear-gradient(135deg,#1677ff,#5294e8);border-radius:16px;padding:18px 20px;color:#fff;margin-bottom:14px}
     .cat-row{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
     .cat-pill{background:#fff;border:1.5px solid #e0e0e0;border-radius:16px;padding:5px 12px;font-size:12px;cursor:pointer}
@@ -45,16 +32,13 @@
     .inc-body{flex:1}
     .inc-amt{font-size:15px;font-weight:700;color:#52c41a}
     .inc-amt.red{color:#ff4d4f}
-    /* 统计 */
     .wk-card{background:linear-gradient(135deg,#141c28,#1e3a5f);border-radius:16px;padding:18px 16px;margin-bottom:14px}
     .wk-card .ci{background:rgba(255,255,255,.07);border-radius:10px;padding:12px 8px;text-align:center}
     .wk-card .ci-num{font-size:22px;font-weight:700;color:#fff}
     .wk-card .ci-lbl{font-size:10px;color:rgba(255,255,255,.45);margin-top:2px}
-    /* 快捷按钮 */
     .quick-row{display:flex;gap:8px;margin-bottom:14px}
     .quick-btn{flex:1;background:#fff;border:1px solid #eee;border-radius:10px;padding:10px 4px;font-size:13px;font-weight:600;color:#ff4d4f;cursor:pointer;text-align:center;line-height:1.3}
     .quick-btn small{display:block;font-size:11px;font-weight:400;color:#999;margin-top:1px}
-    /* 历史 */
     .day-stat{background:#fff;border-radius:12px;padding:14px;display:flex;justify-content:space-around;margin-bottom:14px}
     .day-stat .num{font-size:24px;font-weight:700}
     .day-stat .lbl{font-size:11px;color:#888}
@@ -65,6 +49,35 @@
     .rec-card .addr{font-size:12px;color:#888;margin-top:2px}
     .rec-card .time{font-size:11px;color:#bbb;margin-top:2px}
     .rec-card .del{background:none;border:none;color:#ccc;font-size:16px;cursor:pointer;padding:4px}
+    /* 模态框 */
+    .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;z-index:1000}
+    .modal-box{background:#fff;border-radius:20px 20px 0 0;padding:0;width:100%;max-width:480px;max-height:92vh;overflow:hidden;display:flex;flex-direction:column}
+    .modal-handle{width:40px;height:4px;background:#ddd;border-radius:2px;margin:12px auto 0}
+    .modal-top{padding:12px 20px 16px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between}
+    .modal-title{font-size:17px;font-weight:700}
+    .modal-close{background:none;border:none;font-size:20px;color:#999;cursor:pointer;padding:4px}
+    /* 地图区域 */
+    .pick-map{width:100%;height:280px;background:#e8eaf0;position:relative;cursor:crosshair}
+    .pick-tip{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);color:#fff;padding:6px 16px;border-radius:20px;font-size:12px;white-space:nowrap;z-index:10}
+    .pick-crosshair{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:30px;height:30px;pointer-events:none;z-index:5}
+    .pick-addr{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.96);border-radius:10px;padding:8px 14px;font-size:13px;max-width:90%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 2px 8px rgba(0,0,0,.15);z-index:10}
+    .pick-addr.loading{color:#999;font-style:italic}
+    .pick-addr.done{color:#333}
+    /* 表单 */
+    .modal-form{padding:16px 20px 24px;flex:1;overflow-y:auto}
+    .form-row{margin-bottom:14px}
+    .form-label{font-size:12px;color:#888;margin-bottom:6px}
+    .form-input{width:100%;border:1.5px solid #e0e0e0;border-radius:10px;padding:12px;font-size:15px;box-sizing:border-box;background:#fff}
+    .form-input:focus{border-color:#1677ff;outline:none}
+    .form-time{display:flex;gap:8px}
+    .form-time input{flex:1;border:1.5px solid #e0e0e0;border-radius:10px;padding:12px;font-size:15px;box-sizing:border-box;background:#fff}
+    .modal-confirm{padding:16px 20px;border-top:1px solid #f0f0f0}
+    .confirm-btn{width:100%;padding:15px;border:none;border-radius:12px;font-size:16px;font-weight:700;color:#fff;cursor:pointer}
+    .confirm-btn:disabled{background:#ccc;cursor:not-allowed}
+    /* 位置选择模式按钮 */
+    .mode-toggle{display:flex;gap:8px;margin-bottom:14px}
+    .mode-btn{flex:1;padding:10px;border:1.5px solid #e0e0e0;border-radius:10px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;text-align:center;transition:all .15s}
+    .mode-btn.active{border-color:#1677ff;color:#1677ff;background:#e6f4ff}
   </style>
 </head>
 <body>
@@ -89,8 +102,8 @@
   <div v-if="tab==='map'" class="page">
     <div style="background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;text-align:center">
       <div style="font-size:16px;font-weight:700;margin-bottom:4px">🚗 跑车记录</div>
-      <div style="font-size:12px;color:#999;margin-bottom:16px">手动记录上下车位置和时间</div>
-      <div style="display:flex;gap:12px">
+      <div style="font-size:12px;color:#999;margin-bottom:16px">在地图上点击选点，或手动输入地址</div>
+      <div style="display:flex;gap:10px">
         <button class="rec-btn btn-up" v-on:click="openModal('up')">🚗 乘客上车</button>
         <button class="rec-btn btn-down" v-on:click="openModal('down')">🏁 乘客下车</button>
       </div>
@@ -109,7 +122,7 @@
           <button class="del" v-on:click="delRide(r.id)">✕</button>
         </div>
       </div>
-      <div v-else class="empty-state">暂无记录，点击上方按钮开始记录</div>
+      <div v-else class="empty-state">暂无记录，点击上方按钮开始</div>
     </div>
 
     <div v-if="lastMsg" style="background:#52c41a;color:#fff;text-align:center;padding:12px;border-radius:10px;font-size:14px">{{ lastMsg }}</div>
@@ -198,12 +211,12 @@
     </div>
 
     <div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:14px">
-      <div style="font-size:13px;font-weight:600;margin-bottom:10px">⏰ 高峰时段（上车）</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px">⏰ 高峰时段</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
         <span v-for="h in peaks" :key="h" style="background:#e6f4ff;color:#1677ff;border-radius:12px;padding:4px 12px;font-size:13px;font-weight:600">{{ h }}</span>
         <span v-if="!peaks.length" style="font-size:12px;color:#bbb">记录更多数据</span>
       </div>
-      <div style="display:flex;align-items:flex-end;gap:2px;height:56px;padding-bottom:18px;position:relative">
+      <div style="display:flex;align-items:flex-end;gap:2px;height:56px;padding-bottom:18px">
         <div v-for="(v,i) in hrly" :key="i" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%">
           <div v-bind:style="{width:'100%',height:barH(v),background:'linear-gradient(to top,#1677ff,#69b1ff)',borderRadius:'2px 2px 0 0',minHeight:'3px',transition:'height .3s'}"></div>
         </div>
@@ -228,42 +241,77 @@
     </div>
   </div>
 
-  <!-- ========== 模态框 ========== -->
+  <!-- ========== 选点模态框 ========== -->
   <div class="modal" v-if="showModal" v-on:click.self="showModal=false">
     <div class="modal-box">
-      <div class="modal-title">{{ modalType==='up'?'🚗 记录上车':'🏁 记录下车' }}</div>
-      
-      <div class="modal-row">
-        <div class="modal-label">地址 / 位置描述</div>
-        <input v-model="modalAddr" class="modal-input" placeholder="如：朝阳大悦城门口、地铁站A口" />
+      <div class="modal-handle"></div>
+      <div class="modal-top">
+        <div class="modal-title">{{ modalType==='up'?'🚗 记录上车':'🏁 记录下车' }}</div>
+        <button class="modal-close" v-on:click="showModal=false">✕</button>
       </div>
-      
-      <div class="modal-row">
-        <div class="modal-label">时间</div>
-        <div class="modal-time">
-          <input v-model="modalDate" type="date" style="flex:1.2" />
-          <input v-model="modalTime" type="time" style="flex:1" />
+
+      <!-- 地图选点区 -->
+      <div class="pick-map" v-bind:id="'pick-map-'+modalUid">
+        <div class="pick-tip">👆 点击地图选择位置</div>
+        <!-- 十字符号 -->
+        <div class="pick-crosshair">
+          <svg viewBox="0 0 30 30" width="30" height="30">
+            <line x1="15" y1="0" x2="15" y2="30" stroke="#1677ff" stroke-width="2"/>
+            <line x1="0" y1="15" x2="30" y2="15" stroke="#1677ff" stroke-width="2"/>
+            <circle cx="15" cy="15" r="5" fill="none" stroke="#1677ff" stroke-width="2"/>
+          </svg>
+        </div>
+        <div class="pick-addr" v-bind:class="pickedAddr?'done':'loading'">
+          {{ pickedAddr || (picking ? '正在解析地址...' : '请在地图上点击选择位置') }}
         </div>
       </div>
 
-      <div class="modal-row">
-        <div class="modal-label">备注（可选）</div>
-        <input v-model="modalNote" class="modal-input" placeholder="如：乘客说去三里屯" />
+      <!-- 切换输入模式 -->
+      <div style="padding:12px 20px 0">
+        <div class="mode-toggle">
+          <div class="mode-btn" v-bind:class="{active:inputMode==='map'}" v-on:click="inputMode='map';initPickMap()">
+            🗺️ 地图选点
+          </div>
+          <div class="mode-btn" v-bind:class="{active:inputMode==='manual'}" v-on:click="inputMode='manual'">
+            ✏️ 手动输入
+          </div>
+        </div>
       </div>
 
-      <div class="modal-btns">
-        <button v-on:click="showModal=false" style="background:#f5f5f5;color:#666">取消</button>
-        <button v-on:click="confirmAdd" v-bind:disabled="!modalAddr" style="background:#1677ff;color:#fff">确认记录</button>
+      <!-- 表单 -->
+      <div class="modal-form">
+        <div class="form-row">
+          <div class="form-label">地址 / 位置描述</div>
+          <input v-model="modalAddr" class="form-input" placeholder="输入地址，如：朝阳大悦城" v-bind:disabled="inputMode==='map' && !pickedAddr" />
+        </div>
+        <div class="form-row">
+          <div class="form-label">时间</div>
+          <div class="form-time">
+            <input v-model="modalDate" type="date" />
+            <input v-model="modalTime" type="time" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">备注（可选）</div>
+          <input v-model="modalNote" class="form-input" placeholder="如：乘客说去三里屯" />
+        </div>
+      </div>
+
+      <div class="modal-confirm">
+        <button class="confirm-btn" v-bind:disabled="!modalAddr" v-bind:style="modalType==='up'?{background:'#52c41a'}:{background:'#ff4d4f'}" v-on:click="confirmAdd">
+          {{ modalType==='up'?'✅ 确认上车记录':'✅ 确认下车记录' }}
+        </button>
       </div>
     </div>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/vue@3.4.0/dist/vue.global.prod.js"></script>
+<script src="https://webapi.amap.com/maps?v=2.0&key=59b217300fed74cf72a4090b12cca4b3"></script>
 <script>
 (function(){
-  var LS_R = 'h5_r_v5';
-  var LS_I = 'h5_i_v5';
+  var LS_R = 'h5_r_v6';
+  var LS_I = 'h5_i_v6';
 
   var rides = JSON.parse(localStorage.getItem(LS_R) || '[]');
   var inc = JSON.parse(localStorage.getItem(LS_I) || '[]');
@@ -278,7 +326,7 @@
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
   }
   function fmtTimeFull(d) {
-    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ':' + String(d.getSeconds()).padStart(2,'0');
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
   }
 
   var app = Vue.createApp({
@@ -288,12 +336,21 @@
         lastMsg: '',
         // 模态框
         showModal: false,
+        modalUid: 0,
         modalType: 'up',
         modalAddr: '',
         modalDate: fmtDate(now()),
-        modalTime: fmtTimeFull(now()).substring(0,5),
+        modalTime: fmtTimeFull(now()),
         modalNote: '',
-        // 收支表单
+        // 地图选点
+        inputMode: 'map', // 'map' | 'manual'
+        pickedAddr: '',
+        pickedLng: null,
+        pickedLat: null,
+        picking: false,
+        pickMapObj: null,
+        pickMarker: null,
+        // 收支
         form: { cat: '流水', amt: '', note: '' },
         cats: [
           { l: '💰 流水', v: '流水', t: 'in' },
@@ -309,17 +366,13 @@
           { l: '停车', v: '停车', a: 10 },
           { l: '免佣', v: '免佣卡', a: 20 }
         ],
-        // 历史选择
+        // 历史
         selDay: new Date()
       };
     },
     computed: {
-      todayRides: function() {
-        return this.getDayRides(new Date());
-      },
-      dayRides: function() {
-        return this.getDayRides(this.selDay);
-      },
+      todayRides: function() { return this.getDayRides(new Date()); },
+      dayRides: function() { return this.getDayRides(this.selDay); },
       dayUp: function() { return this.dayRides.filter(function(r){ return r.type==='up'; }).length; },
       dayDown: function() { return this.dayRides.filter(function(r){ return r.type==='down'; }).length; },
       todayInc: function() { return this.getDayInc(new Date()); },
@@ -335,14 +388,12 @@
         if (d.toDateString() === y.toDateString()) return '昨天';
         return (d.getMonth()+1)+'月'+d.getDate()+'日';
       },
-      isToday: function() {
-        return this.selDay.toDateString() === new Date().toDateString();
-      },
+      isToday: function() { return this.selDay.toDateString() === new Date().toDateString(); },
+      selWeek: function() { return this.selDay; },
       wkLabel: function() {
-        var r = this.getWeekRange(this.selWeek || new Date());
+        var r = this.getWeekRange(this.selDay);
         return (r.s.getMonth()+1)+'/'+r.s.getDate()+' - '+(r.e.getMonth()+1)+'/'+r.e.getDate();
       },
-      selWeek: function() { return this.selDay; },
       isCurrWk: function() {
         var curr = this.getWeekRange(new Date());
         var sel = this.getWeekRange(this.selDay);
@@ -388,6 +439,11 @@
       maxHr: function() { return Math.max.apply(null, this.hrly.concat([1])); },
       maxExp: function() { return Math.max.apply(null, Object.values(this.wkExp).concat([1])); }
     },
+    watch: {
+      pickedAddr: function(v) {
+        if (v) this.modalAddr = v;
+      }
+    },
     methods: {
       getDayRides: function(d) {
         var s = new Date(d); s.setHours(0,0,0,0);
@@ -426,36 +482,142 @@
         v.setDate(v.getDate() + d * 7);
         this.selDay = v;
       },
+
+      // ====== 模态框核心 ======
       openModal: function(type) {
-        this.modalType = type;
-        this.modalAddr = '';
-        this.modalNote = '';
-        this.modalDate = fmtDate(now());
-        this.modalTime = fmtTimeFull(now()).substring(0,5);
-        this.showModal = true;
+        var self = this;
+        self.modalType = type;
+        self.modalAddr = '';
+        self.modalNote = '';
+        self.modalDate = fmtDate(now());
+        self.modalTime = fmtTimeFull(now());
+        self.pickedAddr = '';
+        self.pickedLng = null;
+        self.pickedLat = null;
+        self.picking = false;
+        self.inputMode = 'map';
+        self.modalUid = Date.now();
+        self.showModal = true;
+        // 等DOM渲染后初始化地图
+        self.$nextTick(function() {
+          setTimeout(function() { self.initPickMap(); }, 350);
+        });
       },
+
+      initPickMap: function() {
+        var self = this;
+        if (typeof AMap === 'undefined') {
+          setTimeout(function(){ self.initPickMap(); }, 800);
+          return;
+        }
+        var el = document.getElementById('pick-map-' + self.modalUid);
+        if (!el) return;
+        // 地图容器高度设300px
+        el.style.height = '300px';
+        // 清除旧地图
+        if (self.pickMapObj) {
+          try { self.pickMapObj.destroy(); } catch(e){}
+          self.pickMapObj = null;
+        }
+        // 获取当前位置
+        AMap.plugin('AMap.Geolocation', function() {
+          var geo = new AMap.Geolocation({ enableHighAccuracy: true, timeout: 6000, showButton: false });
+          geo.getCurrentPosition(function(status, result) {
+            var center = (status === 'complete' && result.position)
+              ? [result.position.lng, result.position.lat]
+              : [116.397428, 39.90923];
+            self._initMapAt(center);
+          });
+        });
+      },
+
+      _initMapAt: function(center) {
+        var self = this;
+        var el = document.getElementById('pick-map-' + self.modalUid);
+        if (!el) return;
+        var map = new AMap.Map(el, {
+          zoom: 16,
+          center: center,
+          viewMode: '2D',
+          resizeEnable: true
+        });
+        self.pickMapObj = map;
+
+        // 点击选点
+        map.on('click', function(e) {
+          var lng = e.lnglat.getLng();
+          var lat = e.lnglat.getLat();
+          self.pickedLng = lng;
+          self.pickedLat = lat;
+
+          // 画标记
+          if (self.pickMarker) map.remove(self.pickMarker);
+          var color = self.modalType === 'up' ? '#52c41a' : '#ff4d4f';
+          var icon = self.modalType === 'up'
+            ? '<div style="width:32px;height:32px;background:#52c41a;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center"><span style="transform:rotate(45deg);font-size:16px">🚗</span></div>'
+            : '<div style="width:32px;height:32px;background:#ff4d4f;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center"><span style="transform:rotate(45deg);font-size:16px">🏁</span></div>';
+          self.pickMarker = new AMap.Marker({
+            position: [lng, lat],
+            content: icon,
+            offset: new AMap.Pixel(-16, -32)
+          });
+          map.add(self.pickMarker);
+
+          // 逆地理编码
+          self.picking = true;
+          self.pickedAddr = '';
+          var geocoder = new AMap.Geocoder();
+          geocoder.getAddress([lng, lat], function(st, re) {
+            self.picking = false;
+            if (st === 'complete') {
+              // 取简洁地址
+              var comp = re.regeocode.addressComponent;
+              var parts = [];
+              if (comp.street) parts.push(comp.street);
+              if (comp.streetNumber) parts.push(comp.streetNumber);
+              if (!parts.length) parts.push(re.regeocode.formattedAddress.substring(0, 20));
+              self.pickedAddr = parts.join('');
+            } else {
+              self.pickedAddr = lng.toFixed(4) + ',' + lat.toFixed(4);
+            }
+          });
+        });
+      },
+
       confirmAdd: function() {
         if (!this.modalAddr) return;
         var dateTime = new Date(this.modalDate + 'T' + this.modalTime + ':00');
-        rides.unshift({
+        var record = {
           id: Date.now(),
           type: this.modalType,
           addr: this.modalAddr,
           note: this.modalNote || '',
           time: dateTime.toISOString()
-        });
+        };
+        if (this.pickedLng !== null && this.pickedLat !== null) {
+          record.lng = this.pickedLng;
+          record.lat = this.pickedLat;
+        }
+        rides.unshift(record);
         saveAll();
         this.showModal = false;
+        if (this.pickMapObj) {
+          try { this.pickMapObj.destroy(); } catch(e){}
+          this.pickMapObj = null;
+        }
         this.lastMsg = (this.modalType === 'up' ? '✅ 上车' : '🏁 下车') + '已记录';
         var self = this;
         setTimeout(function(){ self.lastMsg = ''; }, 2500);
       },
+
       delRide: function(id) {
         if (confirm('删除此记录？')) {
           rides = rides.filter(function(x){ return x.id !== id; });
           saveAll();
         }
       },
+
+      // 收支
       addInc: function() {
         if (!this.form.amt) return;
         inc.unshift({
@@ -481,12 +643,9 @@
           saveAll();
         }
       },
-      barH: function(v) {
-        return (4 + (v / this.maxHr) * 44) + 'px';
-      },
-      expW: function(v) {
-        return Math.min(100, (v / this.maxExp) * 100) + '%';
-      }
+
+      barH: function(v) { return (4 + (v / this.maxHr) * 44) + 'px'; },
+      expW: function(v) { return Math.min(100, (v / this.maxExp) * 100) + '%'; }
     }
   });
 
