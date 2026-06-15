@@ -7,19 +7,18 @@
   <meta name="theme-color" content="#1677ff" />
   <title>跑车记录 - 网约车司机工作助手</title>
   <style>
-    /* ========== 重置 ========== */
     *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
     html,body{width:100%;height:100%;overflow:hidden}
     body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue','Helvetica','Microsoft YaHei',sans-serif;background:#f0f2f5;color:#333;font-size:14px;-webkit-font-smoothing:antialiased}
     #app{min-width:320px;max-width:480px;margin:0 auto;height:100%;display:flex;flex-direction:column;background:#f0f2f5;position:relative;overflow:hidden}
+    /* ========== 页面框架 ========== */
+    .page{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:60px;-webkit-overflow-scrolling:touch}
     /* ========== 底部导航 ========== */
     .tab-bar{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:56px;background:#fff;border-top:1px solid #eee;display:flex;align-items:center;z-index:9999;padding-bottom:env(safe-area-inset-bottom,0)}
     .tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#999;font-size:10px;cursor:pointer;padding:6px 0;transition:color .15s;user-select:none}
-    .tab-item.on{color:#1677ff}
+    .tab-item.active{color:#1677ff}
     .tab-icon{font-size:22px;line-height:1}
     .tab-label{font-size:10px;line-height:1.2}
-    /* ========== 页面容器 ========== */
-    .page-view{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:60px;-webkit-overflow-scrolling:touch}
     /* ========== 地图页 ========== */
     .map-page{position:relative;width:100%;height:100%}
     .map-box{width:100%;height:100%;background:#e8eaf0}
@@ -39,7 +38,7 @@
     .addr-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:300px}
     .map-btns{position:absolute;bottom:70px;left:50%;transform:translateX(-50%);display:flex;gap:14px;z-index:10}
     .rec-btn{border:none;border-radius:16px;font-size:14px;font-weight:600;color:#fff;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.2);display:flex;flex-direction:column;align-items:center;justify-content:center;width:120px;height:82px;transition:transform .12s,opacity .12s;padding:0}
-    .rec-btn:active:not(:disabled){transform:scale(.93)}
+    .rec-btn:active{transform:scale(.93)}
     .rec-btn:disabled{opacity:.4;cursor:not-allowed}
     .rec-btn .main{font-size:15px;line-height:1.3}
     .rec-btn .sub{font-size:10px;font-weight:400;opacity:.8;margin-top:3px}
@@ -81,17 +80,17 @@
     .form-box{background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 1px 6px rgba(0,0,0,.06)}
     .form-title{font-size:13px;font-weight:600;margin-bottom:10px}
     .cat-row{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
-    .cat-pill{background:#fff;border:1.5px solid #e0e0e0;border-radius:16px;padding:5px 12px;font-size:12px;cursor:pointer;white-space:nowrap}
+    .cat-pill{background:#fff;border:1.5px solid #e0e0e0;border-radius:16px;padding:5px 12px;font-size:12px;cursor:pointer;white-space:nowrap;-webkit-user-select:none;user-select:none}
     .cat-pill.on-inc{border-color:#52c41a;color:#52c41a;background:#f6ffed}
     .cat-pill.on-exp{border-color:#ff4d4f;color:#ff4d4f;background:#fff1f0}
     .amt-row{display:flex;align-items:center;margin-bottom:10px}
     .yuan{font-size:22px;font-weight:700;color:#888;margin-right:6px}
     .amt-input{flex:1;font-size:26px;font-weight:700;border:none;outline:none;color:#222;background:transparent;width:100%}
-    .note-input2{width:100%;border:1px solid #eee;border-radius:8px;padding:9px 12px;font-size:13px;margin-bottom:10px}
-    .do-btn{width:100%;background:#1677ff;color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:600;cursor:pointer}
+    .note-input2{width:100%;border:1px solid #eee;border-radius:8px;padding:9px 12px;font-size:13px;margin-bottom:10px;box-sizing:border-box}
+    .do-btn{width:100%;background:#1677ff;color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:600;cursor:pointer;-webkit-user-select:none}
     .do-btn:disabled{background:#ccc}
     .quick-row{display:flex;gap:10px;margin-bottom:14px}
-    .quick-btn2{flex:1;background:#fff;border:1px solid #eee;border-radius:10px;padding:10px 4px;font-size:13px;font-weight:600;color:#ff4d4f;cursor:pointer;text-align:center;line-height:1.3}
+    .quick-btn2{flex:1;background:#fff;border:1px solid #eee;border-radius:10px;padding:10px 4px;font-size:13px;font-weight:600;color:#ff4d4f;cursor:pointer;text-align:center;line-height:1.3;-webkit-user-select:none}
     .quick-btn2 small{display:block;font-size:11px;font-weight:400;color:#999;margin-top:1px}
     .sec-title{font-size:13px;font-weight:600;margin-bottom:8px;margin-top:4px}
     .inc-list{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.06)}
@@ -148,330 +147,586 @@
 'use strict';
 
 // ==================== 数据层 ====================
-const S = Vue.reactive({
-  rides: JSON.parse(localStorage.getItem('h5_r') || '[]'),
-  inc:   JSON.parse(localStorage.getItem('h5_i') || '[]'),
-});
-const sv = () => (localStorage.setItem('h5_r', JSON.stringify(S.rides)), localStorage.setItem('h5_i', JSON.stringify(S.inc)));
-const addR = (t,p,a) => (S.rides.unshift({id:Date.now(),type:t,lat:p.lat,lng:p.lng,addr:a||'未知',time:new Date().toISOString()}),sv());
-const delR = id => (S.rides=S.rides.filter(x=>x.id!==id),sv());
-const addI = (c,a,n) => (S.inc.unshift({id:Date.now(),cat:c,amt:parseFloat(a),note:n||'',time:new Date().toISOString(),type:c==='流水'?'in':'out'}),sv());
-const delI = id => (S.inc=S.inc.filter(x=>x.id!==id),sv());
+const LS_RIDES = 'h5_rides_v2';
+const LS_INC = 'h5_inc_v2';
 
-// 工具
-const wr_ = d => { const day=d.getDay(),dif=d.getDate()-day+(day===0?-6:1),s=new Date(d);s.setDate(dif);s.setHours(0,0,0,0);const e=new Date(s);e.setDate(s.getDate()+6);e.setHours(23,59,59,999);return {s,e}; };
-const dr_ = d => { const s=new Date(d);s.setHours(0,0,0,0);const e=new Date(d);e.setHours(23,59,59,999);return {s,e}; };
-const flt = (a,s,e) => a.filter(x=>{const t=new Date(x.time);return t>=s&&t<=e;});
+let rides = JSON.parse(localStorage.getItem(LS_RIDES) || '[]');
+let inc = JSON.parse(localStorage.getItem(LS_INC) || '[]');
+
+function saveAll() {
+  localStorage.setItem(LS_RIDES, JSON.stringify(rides));
+  localStorage.setItem(LS_INC, JSON.stringify(inc));
+}
+
+function addRide(type, pos, addr) {
+  rides.unshift({
+    id: Date.now(),
+    type: type,
+    lat: pos.lat,
+    lng: pos.lng,
+    addr: addr || '未知',
+    time: new Date().toISOString()
+  });
+  saveAll();
+}
+
+function delRide(id) {
+  rides = rides.filter(function(x){ return x.id !== id; });
+  saveAll();
+}
+
+function addInc(cat, amt, note) {
+  inc.unshift({
+    id: Date.now(),
+    cat: cat,
+    amt: parseFloat(amt),
+    note: note || '',
+    time: new Date().toISOString(),
+    type: cat === '流水' ? 'in' : 'out'
+  });
+  saveAll();
+}
+
+function delInc(id) {
+  inc = inc.filter(function(x){ return x.id !== id; });
+  saveAll();
+}
+
+// 工具函数
+function weekRange(d) {
+  var day = d.getDay();
+  var diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  var s = new Date(d);
+  s.setDate(diff);
+  s.setHours(0, 0, 0, 0);
+  var e = new Date(s);
+  e.setDate(s.getDate() + 6);
+  e.setHours(23, 59, 59, 999);
+  return { s: s, e: e };
+}
+
+function dayRange(d) {
+  var s = new Date(d);
+  s.setHours(0, 0, 0, 0);
+  var e = new Date(d);
+  e.setHours(23, 59, 59, 999);
+  return { s: s, e: e };
+}
+
+function filterInRange(arr, start, end) {
+  return arr.filter(function(x) {
+    var t = new Date(x.time);
+    return t >= start && t <= end;
+  });
+}
 
 // ==================== 地图页 ====================
-const MapPage = {
-  template:`
-<div class="map-page">
-  <div id="map-canvas" class="map-box"></div>
-  <div class="map-status">
-    <div class="dot" :class="stCls"></div>
-    <span>{{ stTxt }}</span>
-    <span class="map-today">今日 {{ todayN }} 单</span>
-  </div>
-  <div class="map-addr" v-if="addr"><span>📍</span><span class="addr-text">{{ addr }}</span></div>
-  <div class="map-btns">
-    <button class="rec-btn btn-up" @click="rec('up')" :disabled="!pos||busy"><span class="main">🚗 乘客上车</span><span class="sub">记录接单位置</span></button>
-    <button class="rec-btn btn-down" @click="rec('down')" :disabled="!pos||busy"><span class="main">🏁 乘客下车</span><span class="sub">记录到达位置</span></button>
-  </div>
-  <div class="map-err" v-if="err">
-    <div class="map-err-icon">⚠️</div>
-    <div class="map-err-text">地图加载失败</div>
-    <div class="map-err-tip">{{ err }}</div>
-    <button class="map-retry" @click="init">重试</button>
-  </div>
-  <transition name="fade"><div class="toast-pop" v-if="msg">{{ msg }}</div></transition>
-</div>`,
-  setup(){
-    const pos  = Vue.ref(null);
-    const addr = Vue.ref('');
-    const busy = Vue.ref(false);
-    const msg  = Vue.ref('');
-    const err  = Vue.ref('');
-    let map=null, geo=null, mPos=null, mRides=[];
-
-    const stCls = Vue.computed(()=>{ if(err.value)return'err'; return pos.value?'green':'yellow'; });
-    const stTxt = Vue.computed(()=>{ if(err.value)return'加载失败'; return pos.value?'定位成功':'定位中...'; });
-    const todayN = Vue.computed(()=>{ const{ s,e }=dr_(new Date());return flt(S.rides,s,e).length; });
-
-    function toast(m){msg.value=m;setTimeout(()=>msg.value='',2200);}
-
-    function drawPos(p){
-      pos.value={lng:p.lng,lat:p.lat};
-      if(!map)return;
-      map.setCenter([p.lng,p.lat]);
-      if(mPos)map.remove(mPos);
-      mPos=new AMap.Marker({position:[p.lng,p.lat],
-        content:'<div style="width:18px;height:18px;background:#1677ff;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(22,119,255,.5)"></div>',
-        offset:new AMap.Pixel(-9,-9)
+var MapPage = {
+  template: '\
+<div class="map-page">\
+  <div id="map-canvas" class="map-box"></div>\
+  <div class="map-status">\
+    <div class="dot" v-bind:class="dotClass"></div>\
+    <span>{{ statusText }}</span>\
+    <span class="map-today">今日 {{ todayCount }} 单</span>\
+  </div>\
+  <div class="map-addr" v-if="addr">\
+    <span>📍</span><span class="addr-text">{{ addr }}</span>\
+  </div>\
+  <div class="map-btns">\
+    <button class="rec-btn btn-up" v-on:click="recUp" v-bind:disabled="!pos || busy">\
+      <span class="main">🚗 乘客上车</span><span class="sub">记录接单位置</span>\
+    </button>\
+    <button class="rec-btn btn-down" v-on:click="recDown" v-bind:disabled="!pos || busy">\
+      <span class="main">🏁 乘客下车</span><span class="sub">记录到达位置</span>\
+    </button>\
+  </div>\
+  <div class="map-err" v-if="err">\
+    <div class="map-err-icon">⚠️</div>\
+    <div class="map-err-text">地图加载失败</div>\
+    <div class="map-err-tip">{{ err }}</div>\
+    <button class="map-retry" v-on:click="initMap">重试</button>\
+  </div>\
+  <transition name="fade">\
+    <div class="toast-pop" v-if="msg">{{ msg }}</div>\
+  </transition>\
+</div>',
+  data: function() {
+    return {
+      pos: null,
+      addr: '',
+      busy: false,
+      msg: '',
+      err: '',
+      todayCount: 0
+    };
+  },
+  computed: {
+    dotClass: function() {
+      if (this.err) return 'dot-red';
+      return this.pos ? 'dot-green' : 'dot-yellow';
+    },
+    statusText: function() {
+      if (this.err) return '加载失败';
+      return this.pos ? '定位成功' : '定位中...';
+    }
+  },
+  mounted: function() {
+    var self = this;
+    self.updateToday();
+    setTimeout(function() { self.initMap(); }, 400);
+  },
+  beforeUnmount: function() {
+    if (this.map) { this.map.destroy(); this.map = null; }
+  },
+  methods: {
+    updateToday: function() {
+      var r = dayRange(new Date());
+      this.todayCount = filterInRange(rides, r.s, r.e).length;
+    },
+    showToast: function(m) {
+      var self = this;
+      self.msg = m;
+      setTimeout(function() { self.msg = ''; }, 2200);
+    },
+    drawPosMarker: function(p) {
+      var self = this;
+      self.pos = { lng: p.lng, lat: p.lat };
+      if (!self.map) return;
+      self.map.setCenter([p.lng, p.lat]);
+      if (self.markerPos) self.map.remove(self.markerPos);
+      self.markerPos = new AMap.Marker({
+        position: [p.lng, p.lat],
+        content: '<div style="width:18px;height:18px;background:#1677ff;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(22,119,255,.5)"></div>',
+        offset: new AMap.Pixel(-9, -9)
       });
-      map.add(mPos);
-    }
-
-    function drawRide(p,t){
-      if(!map)return;
-      const ic=t==='up'
-        ?'<div style="width:28px;height:28px;background:#52c41a;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center"><span style="transform:rotate(45deg);font-size:14px">🚗</span></div>'
-        :'<div style="width:28px;height:28px;background:#ff4d4f;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center"><span style="transform:rotate(45deg);font-size:14px">🏁</span></div>';
-      const m=new AMap.Marker({position:[p.lng,p.lat],content:ic,offset:new AMap.Pixel(-14,-28)});
-      map.add(m);
-      mRides.push(m);
-    }
-
-    function doGeo(){
-      return new Promise(res=>{
-        if(!geo){res();return;}
-        geo.getCurrentPosition((s,r)=>{if(s==='complete')drawPos(r.position);res();});
-      });
-    }
-
-    async function rec(t){
-      if(!pos.value)return;
-      busy.value=true;
-      try{
-        await doGeo();
-        addR(t,pos.value,addr.value);
-        drawRide(pos.value,t);
-        toast(t==='up'?'✅ 上车位置已记录':'🏁 下车位置已记录');
-      }finally{busy.value=false;}
-    }
-
-    function init(){
-      err.value='';
-      if(typeof AMap==='undefined'){err.value='高德地图未加载，请检查网络';return;}
-      try{
-        map=new AMap.Map('map-canvas',{zoom:15,center:[116.397428,39.90923],viewMode:'2D',resizeEnable:true});
-        AMap.plugin('AMap.Geolocation',()=>{
-          geo=new AMap.Geolocation({enableHighAccuracy:true,timeout:8000,showButton:false});
-          map.addControl(geo);
-          geo.getCurrentPosition((s,r)=>{
-            if(s==='complete'){
-              drawPos(r.position);
-              new AMap.Geocoder().getAddress([r.position.lng,r.position.lat],(st,re)=>{
-                if(st==='complete')addr.value=re.regeocode.formattedAddress;
+      self.map.add(self.markerPos);
+    },
+    drawRideMarker: function(p, type) {
+      var self = this;
+      if (!self.map) return;
+      var ic = type === 'up'
+        ? '<div style="width:28px;height:28px;background:#52c41a;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center"><span style="transform:rotate(45deg);font-size:14px">🚗</span></div>'
+        : '<div style="width:28px;height:28px;background:#ff4d4f;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center"><span style="transform:rotate(45deg);font-size:14px">🏁</span></div>';
+      var m = new AMap.Marker({ position: [p.lng, p.lat], content: ic, offset: new AMap.Pixel(-14, -28) });
+      self.map.add(m);
+      self.rideMarkers.push(m);
+    },
+    initMap: function() {
+      var self = this;
+      self.err = '';
+      if (typeof AMap === 'undefined') {
+        self.err = '高德地图未加载，请检查网络';
+        return;
+      }
+      try {
+        self.map = new AMap.Map('map-canvas', {
+          zoom: 15,
+          center: [116.397428, 39.90923],
+          viewMode: '2D',
+          resizeEnable: true
+        });
+        AMap.plugin('AMap.Geolocation', function() {
+          self.geo = new AMap.Geolocation({ enableHighAccuracy: true, timeout: 8000, showButton: false });
+          self.map.addControl(self.geo);
+          self.geo.getCurrentPosition(function(status, result) {
+            if (status === 'complete') {
+              self.drawPosMarker(result.position);
+              var geocoder = new AMap.Geocoder();
+              geocoder.getAddress([result.position.lng, result.position.lat], function(st, re) {
+                if (st === 'complete') self.addr = re.regeocode.formattedAddress;
               });
             }
           });
         });
-        const{ s,e }=dr_(new Date());
-        flt(S.rides,s,e).forEach(r=>drawRide(r,r.type));
-      }catch(e){err.value=e.message||'未知错误';}
+        // 画今日记录
+        var r = dayRange(new Date());
+        var todayRides = filterInRange(rides, r.s, r.e);
+        self.rideMarkers = [];
+        todayRides.forEach(function(r) {
+          self.drawRideMarker(r, r.type);
+        });
+      } catch(e) {
+        self.err = e.message || '未知错误';
+      }
+    },
+    recUp: function() {
+      this.doRecord('up');
+    },
+    recDown: function() {
+      this.doRecord('down');
+    },
+    doRecord: function(type) {
+      var self = this;
+      if (!self.pos) return;
+      self.busy = true;
+      try {
+        addRide(type, self.pos, self.addr);
+        self.drawRideMarker(self.pos, type);
+        self.updateToday();
+        self.showToast(type === 'up' ? '✅ 上车位置已记录' : '🏁 下车位置已记录');
+      } finally {
+        self.busy = false;
+      }
     }
-
-    Vue.onMounted(()=>{setTimeout(init,500);});
-    Vue.onUnmounted(()=>{if(map)map.destroy();});
-    return {pos,addr,busy,msg,err,stCls,stTxt,todayN,rec,init};
   }
 };
 
 // ==================== 历史页 ====================
-const HistPage = {
-  template:`
-<div class="hist page-view">
-  <div class="date-row">
-    <button class="date-btn2" @click="ch(-1)">◀</button>
-    <div class="date-lbl">{{ dlbl }}</div>
-    <button class="date-btn2" @click="ch(1)" :disabled="today">▶</button>
-  </div>
-  <div class="day-stat">
-    <div class="item"><span class="num" style="color:#52c41a">{{ pu }}</span><span class="lbl">上车</span></div>
-    <div class="div"></div>
-    <div class="item"><span class="num" style="color:#ff4d4f">{{ do_ }}</span><span class="lbl">下车</span></div>
-    <div class="div"></div>
-    <div class="item"><span class="num" style="color:#1677ff">{{ Math.min(pu,do_) }}</span><span class="lbl">完成</span></div>
-  </div>
-  <div v-if="recs.length">
-    <div v-for="r in recs" :key="r.id" class="rec-card">
-      <div class="rec-icon2">{{ r.type==='up'?'🚗':'🏁' }}</div>
-      <div class="rec-body">
-        <div class="rec-kind">{{ r.type==='up'?'乘客上车':'乘客下车' }}</div>
-        <div class="rec-addr">{{ r.addr }}</div>
-        <div class="rec-time2">{{ ft(r.time) }}</div>
-      </div>
-      <button class="rec-del" @click="del(r.id)">✕</button>
-    </div>
-  </div>
-  <div class="empty-state" v-else>
-    <div class="e-icon">📋</div><div class="e-txt">当日暂无记录</div><div class="e-tip">在「记录」页面点击按钮即可记录</div>
-  </div>
-</div>`,
-  setup(){
-    const sel=Vue.ref(new Date());
-    const dlbl=Vue.computed(()=>{
-      const d=sel.value,t=new Date(),y=new Date(t);y.setDate(t.getDate()-1);
-      if(d.toDateString()===t.toDateString())return'今天';
-      if(d.toDateString()===y.toDateString())return'昨天';
-      return `${d.getMonth()+1}月${d.getDate()}日`;
-    });
-    const today=Vue.computed(()=>sel.value.toDateString()===new Date().toDateString());
-    const recs=Vue.computed(()=>{ const{s,e}=dr_(sel.value);return flt(S.rides,s,e); });
-    const pu=Vue.computed(()=>recs.value.filter(x=>x.type==='up').length);
-    const do_=Vue.computed(()=>recs.value.filter(x=>x.type==='down').length);
-    const ch=d=>{const v=new Date(sel.value);v.setDate(v.getDate()+d);if(v<=new Date())sel.value=v;};
-    const ft=s=>{const d=new Date(s);return`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;};
-    const del=id=>{if(confirm('删除此记录？'))delR(id);};
-    return{sel,dlbl,today,recs,pu,do_,ch,ft,del};
+var HistPage = {
+  template: '\
+<div class="hist page">\
+  <div class="date-row">\
+    <button class="date-btn2" v-on:click="ch(-1)">◀</button>\
+    <div class="date-lbl">{{ dlbl }}</div>\
+    <button class="date-btn2" v-on:click="ch(1)" v-bind:disabled="today">▶</button>\
+  </div>\
+  <div class="day-stat">\
+    <div class="item"><span class="num" style="color:#52c41a">{{ pu }}</span><span class="lbl">上车</span></div>\
+    <div class="div"></div>\
+    <div class="item"><span class="num" style="color:#ff4d4f">{{ doNum }}</span><span class="lbl">下车</span></div>\
+    <div class="div"></div>\
+    <div class="item"><span class="num" style="color:#1677ff">{{ Math.min(pu, doNum) }}</span><span class="lbl">完成</span></div>\
+  </div>\
+  <div v-if="recs.length">\
+    <div v-for="r in recs" :key="r.id" class="rec-card">\
+      <div class="rec-icon2">{{ r.type === \'up\' ? \'🚗\' : \'🏁\' }}</div>\
+      <div class="rec-body">\
+        <div class="rec-kind">{{ r.type === \'up\' ? \'乘客上车\' : \'乘客下车\' }}</div>\
+        <div class="rec-addr">{{ r.addr }}</div>\
+        <div class="rec-time2">{{ fmt(r.time) }}</div>\
+      </div>\
+      <button class="rec-del" v-on:click="delRecord(r.id)">✕</button>\
+    </div>\
+  </div>\
+  <div class="empty-state" v-else>\
+    <div class="e-icon">📋</div>\
+    <div class="e-txt">当日暂无记录</div>\
+    <div class="e-tip">在「记录」页面点击按钮即可记录</div>\
+  </div>\
+</div>',
+  data: function() {
+    return { sel: new Date() };
+  },
+  computed: {
+    dlbl: function() {
+      var d = this.sel;
+      var t = new Date();
+      var y = new Date(t);
+      y.setDate(t.getDate() - 1);
+      if (d.toDateString() === t.toDateString()) return '今天';
+      if (d.toDateString() === y.toDateString()) return '昨天';
+      return (d.getMonth() + 1) + '月' + d.getDate() + '日';
+    },
+    today: function() {
+      return this.sel.toDateString() === new Date().toDateString();
+    },
+    recs: function() {
+      var r = dayRange(this.sel);
+      return filterInRange(rides, r.s, r.e);
+    },
+    pu: function() {
+      return this.recs.filter(function(x){ return x.type === 'up'; }).length;
+    },
+    doNum: function() {
+      return this.recs.filter(function(x){ return x.type === 'down'; }).length;
+    }
+  },
+  methods: {
+    ch: function(d) {
+      var v = new Date(this.sel);
+      v.setDate(v.getDate() + d);
+      if (v <= new Date()) this.sel = v;
+    },
+    fmt: function(s) {
+      var d = new Date(s);
+      return [String(d.getHours()).padStart(2,'0'), String(d.getMinutes()).padStart(2,'0'), String(d.getSeconds()).padStart(2,'0')].join(':');
+    },
+    delRecord: function(id) {
+      if (confirm('删除此记录？')) delRide(id);
+    }
   }
 };
 
 // ==================== 收支页 ====================
-const IncPage = {
-  template:`
-<div class="inc page-view">
-  <div class="inc-card">
-    <div class="inc-card-hd">💰 今日收支</div>
-    <div class="inc-card-bd">
-      <div class="ci"><div class="ci-lbl">流水</div><div class="ci-val green">+¥{{ di.in.toFixed(2) }}</div></div>
-      <div class="ci"><div class="ci-lbl">支出</div><div class="ci-val red">-¥{{ di.out.toFixed(2) }}</div></div>
-      <div class="ci"><div class="ci-lbl">净赚</div><div class="ci-val" :class="di.in-di.out>=0?'green':'red'">{{ di.in-di.out>=0?'+':'-' }}¥{{ Math.abs(di.in-di.out).toFixed(2) }}</div></div>
-    </div>
-  </div>
-  <div class="form-box">
-    <div class="form-title">📝 记一笔</div>
-    <div class="cat-row">
-      <div v-for="c in cats" :key="c.v" class="cat-pill" :class="fm.cat===c.v?(c.t==='in'?'on-inc':'on-exp'):''" @click="fm.cat=c.v">{{ c.l }}</div>
-    </div>
-    <div class="amt-row"><span class="yuan">¥</span><input class="amt-input" v-model="fm.amt" type="number" placeholder="0.00" step="0.01" /></div>
-    <input class="note-input2" v-model="fm.note" placeholder="备注（可选）" />
-    <button class="do-btn" @click="submit" :disabled="!fm.amt">记一笔</button>
-  </div>
-  <div class="quick-row">
-    <button v-for="q in quicks" :key="q.v" class="quick-btn2" @click="qk(q.v,q.a)">{{ q.l }}<small>¥{{ q.a }}</small></button>
-  </div>
-  <div class="sec-title">📋 今日记录（实时）</div>
-  <div class="inc-list" v-if="recs.length">
-    <div v-for="r in recs" :key="r.id" class="inc-row">
-      <div class="inc-body">
-        <div class="inc-cat">{{ r.cat }}</div>
-        <div class="inc-note" v-if="r.note">{{ r.note }}</div>
-        <div class="inc-time">{{ ft(r.time) }}</div>
-      </div>
-      <div class="inc-amt" :class="r.type==='in'?'green':'red'">{{ r.type==='in'?'+':'-' }}¥{{ r.amt.toFixed(2) }}</div>
-      <button class="inc-del" @click="del(r.id)">✕</button>
-    </div>
-  </div>
-  <div class="empty-state" v-else style="padding:20px 0"><div class="e-txt">暂无记录</div></div>
-</div>`,
-  setup(){
-    const cats=[
-      {l:'💰 流水',v:'流水',t:'in'},
-      {l:'🔌 充电',v:'充电',t:'out'},
-      {l:'🍜 餐费',v:'餐费',t:'out'},
-      {l:'🎫 免佣',v:'免佣卡',t:'out'},
-      {l:'🅿️ 停车',v:'停车',t:'out'},
-      {l:'📦 其他',v:'其他',t:'out'},
-    ];
-    const quicks=[{l:'充电',v:'充电',a:50},{l:'餐费',v:'餐费',a:30},{l:'停车',v:'停车',a:10},{l:'免佣',v:'免佣卡',a:20}];
-    const fm=Vue.reactive({cat:'流水',amt:'',note:''});
-    const di=Vue.computed(()=>{const{s,e}=dr_(new Date());const a=flt(S.inc,s,e);const inn=a.filter(x=>x.type==='in').reduce((s,x)=>s+x.amt,0);const out=a.filter(x=>x.type==='out').reduce((s,x)=>s+x.amt,0);return{inn,out};});
-    const recs=Vue.computed(()=>{const{s,e}=dr_(new Date());return flt(S.inc,s,e);});
-    const submit=()=>{if(!fm.amt)return;addI(fm.cat,fm.amt,fm.note);fm.amt='';fm.note='';};
-    const qk=(v,a)=>addI(v,a,'');
-    const ft=s=>{const d=new Date(s);return`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;};
-    const del=id=>{if(confirm('删除？'))delI(id);};
-    return{cats,quicks,fm,di,recs,submit,qk,ft,del};
+var IncPage = {
+  template: '\
+<div class="inc page">\
+  <div class="inc-card">\
+    <div class="inc-card-hd">💰 今日收支</div>\
+    <div class="inc-card-bd">\
+      <div class="ci"><div class="ci-lbl">流水</div><div class="ci-val green">+¥{{ dayInc.in.toFixed(2) }}</div></div>\
+      <div class="ci"><div class="ci-lbl">支出</div><div class="ci-val red">-¥{{ dayInc.out.toFixed(2) }}</div></div>\
+      <div class="ci"><div class="ci-lbl">净赚</div><div class="ci-val" v-bind:class="dayInc.in - dayInc.out >= 0 ? \'green\' : \'red\'">{{ dayInc.in - dayInc.out >= 0 ? \'+\' : \'-\' }}¥{{ Math.abs(dayInc.in - dayInc.out).toFixed(2) }}</div></div>\
+    </div>\
+  </div>\
+  <div class="form-box">\
+    <div class="form-title">📝 记一笔</div>\
+    <div class="cat-row">\
+      <div v-for="c in cats" :key="c.v" class="cat-pill" v-bind:class="fm.cat === c.v ? (c.t === \'in\' ? \'on-inc\' : \'on-exp\') : \'\'" v-on:click="fm.cat = c.v">{{ c.l }}</div>\
+    </div>\
+    <div class="amt-row"><span class="yuan">¥</span><input class="amt-input" v-model="fm.amt" type="number" placeholder="0.00" step="0.01" /></div>\
+    <input class="note-input2" v-model="fm.note" placeholder="备注（可选）" />\
+    <button class="do-btn" v-on:click="submit" v-bind:disabled="!fm.amt">记一笔</button>\
+  </div>\
+  <div class="quick-row">\
+    <button v-for="q in quicks" :key="q.v" class="quick-btn2" v-on:click="quickAdd(q.v, q.a)">{{ q.l }}<small>¥{{ q.a }}</small></button>\
+  </div>\
+  <div class="sec-title">📋 今日记录</div>\
+  <div class="inc-list" v-if="dayRecs.length">\
+    <div v-for="r in dayRecs" :key="r.id" class="inc-row">\
+      <div class="inc-body">\
+        <div class="inc-cat">{{ r.cat }}</div>\
+        <div class="inc-note" v-if="r.note">{{ r.note }}</div>\
+        <div class="inc-time">{{ ft(r.time) }}</div>\
+      </div>\
+      <div class="inc-amt" v-bind:class="r.type === \'in\' ? \'green\' : \'red\'">{{ r.type === \'in\' ? \'+\' : \'-\' }}¥{{ r.amt.toFixed(2) }}</div>\
+      <button class="inc-del" v-on:click="delIncItem(r.id)">✕</button>\
+    </div>\
+  </div>\
+  <div class="empty-state" v-else style="padding:20px 0"><div class="e-txt">暂无记录</div></div>\
+</div>',
+  data: function() {
+    return {
+      cats: [
+        { l: '💰 流水', v: '流水', t: 'in' },
+        { l: '🔌 充电', v: '充电', t: 'out' },
+        { l: '🍜 餐费', v: '餐费', t: 'out' },
+        { l: '🎫 免佣', v: '免佣卡', t: 'out' },
+        { l: '🅿️ 停车', v: '停车', t: 'out' },
+        { l: '📦 其他', v: '其他', t: 'out' }
+      ],
+      quicks: [
+        { l: '充电', v: '充电', a: 50 },
+        { l: '餐费', v: '餐费', a: 30 },
+        { l: '停车', v: '停车', a: 10 },
+        { l: '免佣', v: '免佣卡', a: 20 }
+      ],
+      fm: { cat: '流水', amt: '', note: '' }
+    };
+  },
+  computed: {
+    dayInc: function() {
+      var r = dayRange(new Date());
+      var arr = filterInRange(inc, r.s, r.e);
+      var inn = arr.filter(function(x){ return x.type === 'in'; }).reduce(function(s, x){ return s + x.amt; }, 0);
+      var out = arr.filter(function(x){ return x.type === 'out'; }).reduce(function(s, x){ return s + x.amt; }, 0);
+      return { in: inn, out: out };
+    },
+    dayRecs: function() {
+      var r = dayRange(new Date());
+      return filterInRange(inc, r.s, r.e);
+    }
+  },
+  methods: {
+    submit: function() {
+      if (!this.fm.amt) return;
+      addInc(this.fm.cat, this.fm.amt, this.fm.note);
+      this.fm.amt = '';
+      this.fm.note = '';
+    },
+    quickAdd: function(v, a) {
+      addInc(v, a, '');
+    },
+    ft: function(s) {
+      var d = new Date(s);
+      return [String(d.getHours()).padStart(2,'0'), String(d.getMinutes()).padStart(2,'0')].join(':');
+    },
+    delIncItem: function(id) {
+      if (confirm('删除？')) delInc(id);
+    }
   }
 };
 
 // ==================== 统计页 ====================
-const StatPage = {
-  template:`
-<div class="stat page-view">
-  <div class="wk-card">
-    <div class="wk-hd">📅 {{ wlbl }}</div>
-    <div class="wk-grid">
-      <div class="wk-item"><div class="wi-icon">🚗</div><div class="wi-num">{{ trips }}</div><div class="wi-lbl">完成单</div></div>
-      <div class="wk-item"><div class="wi-icon">💰</div><div class="wi-num" style="color:#b7eb8f">¥{{ wi.in.toFixed(0) }}</div><div class="wi-lbl">流水</div></div>
-      <div class="wk-item"><div class="wi-icon">📉</div><div class="wi-num" style="color:#ff7875">¥{{ wi.out.toFixed(0) }}</div><div class="wi-lbl">支出</div></div>
-      <div class="wk-item"><div class="wi-icon">🏆</div><div class="wi-num" :style="{color:wi.in-wi.out>=0?'#b7eb8f':'#ff7875'}">¥{{ (wi.in-wi.out).toFixed(0) }}</div><div class="wi-lbl">净赚</div></div>
-    </div>
-  </div>
-  <div class="card2">
-    <div class="card2-hd">⏰ 高峰接单时段</div>
-    <div class="peak-row">
-      <span class="peak-pill" v-for="h in peaks" :key="h">{{ h }}</span>
-      <span style="font-size:12px;color:#bbb" v-if="!peaks.length">继续记录，数据越多越准</span>
-    </div>
-    <div class="bar-chart">
-      <div v-for="(v,i) in hrly" :key="i" class="bar-col" :title="i+':00 '+v+'单'">
-        <div class="bar-fg" :style="{height:bh(v)}"></div>
-        <div class="bar-lbl" v-if="i%4===0">{{ i }}</div>
-      </div>
-    </div>
-    <div class="x-lbl">0 ─────────────────────────────── 23</div>
-  </div>
-  <div class="card2" v-if="Object.keys(wi.by).length">
-    <div class="card2-hd">💸 支出分类</div>
-    <div v-for="(v,c) in wi.by" :key="c" class="exp-row">
-      <span class="exp-c">{{ c }}</span>
-      <div class="exp-bd"><div class="exp-fg" :style="{width:ew(v)}"></div></div>
-      <span class="exp-v">¥{{ v.toFixed(0) }}</span>
-    </div>
-  </div>
-  <div class="card2">
-    <div class="card2-hd">🔥 上车热力图（本周）</div>
-    <div id="hm-box" class="hm-box"></div>
-    <div class="hm-tip" v-if="!pks.length">记录更多上车位置后自动生成</div>
-  </div>
-  <div class="wk-nav">
-    <button class="wk-nav-btn" @click="wk(-1)">◀ 上周</button>
-    <button class="wk-nav-btn" @click="wk(1)" :disabled="isCW">下周 ▶</button>
-  </div>
-</div>`,
-  setup(){
-    const sel=Vue.ref(new Date());
-    const wlbl=Vue.computed(()=>{const{s,e}=wr_(sel.value);return`${s.getMonth()+1}/${s.getDate()} - ${e.getMonth()+1}/${e.getDate()}`;});
-    const isCW=Vue.computed(()=>{const{s,e}=wr_(new Date());const{si,ei}=wr_(sel.value);return si.getTime()===s.getTime();});
-    const wk=d=>{const v=new Date(sel.value);v.setDate(v.getDate()+d*7);sel.value=v;};
-    const wr=Vue.computed(()=>{const{s,e}=wr_(sel.value);return flt(S.rides,s,e);});
-    const wi=Vue.computed(()=>{const{s,e}=wr_(sel.value);const a=flt(S.inc,s,e);const inn=a.filter(x=>x.type==='in').reduce((s,x)=>s+x.amt,0);const out=a.filter(x=>x.type==='out').reduce((s,x)=>s+x.amt,0);const by={};a.filter(x=>x.type==='out').forEach(x=>{by[x.cat]=(by[x.cat]||0)+x.amt;});return{inn,out,by};});
-    const pks=Vue.computed(()=>wr.value.filter(x=>x.type==='up'));
-    const trips=Vue.computed(()=>Math.min(wr.value.filter(x=>x.type==='up').length,wr.value.filter(x=>x.type==='down').length));
-    const hrly=Vue.computed(()=>{const h=new Array(24).fill(0);wr.value.filter(x=>x.type==='up').forEach(x=>{h[new Date(x.time).getHours()]++;});return h;});
-    const peaks=Vue.computed(()=>hrly.value.map((v,i)=>({i,v})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v).slice(0,3).map(x=>`${x.i}:00`));
-    const mx=Vue.computed(()=>Math.max(...hrly.value,1));
-    const bh=v=>`${4+(v/mx.value)*44}px`;
-    const mxE=Vue.computed(()=>Math.max(...Object.values(wi.value.by),1));
-    const ew=v=>`${Math.min(100,(v/mxE.value)*100)}%`;
-    let hmMap=null,hm=null;
-    const initHM=()=>{
-      const el=document.getElementById('hm-box');
-      if(!el||typeof AMap==='undefined')return;
-      hmMap=new AMap.Map('hm-box',{zoom:12,center:pks.value.length?[pks.value[0].lng,pks.value[0].lat]:[116.397428,39.90923]});
-      AMap.plugin('AMap.Heatmap',()=>{hm=new AMap.Heatmap(hmMap,{radius:25,opacity:[0.4,0.8]});updHM();});
-    };
-    const updHM=()=>{if(!hm||!pks.value.length)return;hm.setDataSet({data:pks.value.map(r=>({lng:r.lng,lat:r.lat,weight:1}))});};
-    Vue.onMounted(()=>setTimeout(initHM,600));
-    Vue.watch(pks,updHM);
-    Vue.onUnmounted(()=>{if(hmMap)hmMap.destroy();});
-    return{sel,wlbl,isCW,wk,wr,wi,pks,trips,hrly,peaks,bh,ew};
+var StatPage = {
+  template: '\
+<div class="stat page">\
+  <div class="wk-card">\
+    <div class="wk-hd">📅 {{ wlbl }}</div>\
+    <div class="wk-grid">\
+      <div class="wk-item"><div class="wi-icon">🚗</div><div class="wi-num">{{ trips }}</div><div class="wi-lbl">完成单</div></div>\
+      <div class="wk-item"><div class="wi-icon">💰</div><div class="wi-num" style="color:#b7eb8f">¥{{ wkInc.in.toFixed(0) }}</div><div class="wi-lbl">流水</div></div>\
+      <div class="wk-item"><div class="wi-icon">📉</div><div class="wi-num" style="color:#ff7875">¥{{ wkInc.out.toFixed(0) }}</div><div class="wi-lbl">支出</div></div>\
+      <div class="wk-item"><div class="wi-icon">🏆</div><div class="wi-num" v-bind:style="{color: wkInc.in - wkInc.out >= 0 ? \'#b7eb8f\' : \'#ff7875\'}">¥{{ (wkInc.in - wkInc.out).toFixed(0) }}</div><div class="wi-lbl">净赚</div></div>\
+    </div>\
+  </div>\
+  <div class="card2">\
+    <div class="card2-hd">⏰ 高峰接单时段</div>\
+    <div class="peak-row">\
+      <span class="peak-pill" v-for="h in peaks" :key="h">{{ h }}</span>\
+      <span style="font-size:12px;color:#bbb" v-if="!peaks.length">继续记录，数据越多越准</span>\
+    </div>\
+    <div class="bar-chart">\
+      <div v-for="(v, i) in hrly" :key="i" class="bar-col" v-bind:title="i + \':00 \' + v + \'单\'">\
+        <div class="bar-fg" v-bind:style="{height: barH(v)}"></div>\
+        <div class="bar-lbl" v-if="i % 4 === 0">{{ i }}</div>\
+      </div>\
+    </div>\
+    <div class="x-lbl">0 ─────────────────────────────── 23</div>\
+  </div>\
+  <div class="card2" v-if="Object.keys(wkInc.by).length">\
+    <div class="card2-hd">💸 支出分类</div>\
+    <div v-for="(v, c) in wkInc.by" :key="c" class="exp-row">\
+      <span class="exp-c">{{ c }}</span>\
+      <div class="exp-bd"><div class="exp-fg" v-bind:style="{width: expW(v)}"></div></div>\
+      <span class="exp-v">¥{{ v.toFixed(0) }}</span>\
+    </div>\
+  </div>\
+  <div class="card2">\
+    <div class="card2-hd">🔥 上车热力图（本周）</div>\
+    <div id="hm-box" class="hm-box"></div>\
+    <div class="hm-tip" v-if="!pickups.length">记录更多上车位置后自动生成</div>\
+  </div>\
+  <div class="wk-nav">\
+    <button class="wk-nav-btn" v-on:click="chWeek(-1)">◀ 上周</button>\
+    <button class="wk-nav-btn" v-on:click="chWeek(1)" v-bind:disabled="isCurrWk">下周 ▶</button>\
+  </div>\
+</div>',
+  data: function() {
+    return { sel: new Date(), hmReady: false };
+  },
+  computed: {
+    wlbl: function() {
+      var r = weekRange(this.sel);
+      return (r.s.getMonth() + 1) + '/' + r.s.getDate() + ' - ' + (r.e.getMonth() + 1) + '/' + r.e.getDate();
+    },
+    isCurrWk: function() {
+      var curr = weekRange(new Date());
+      var sel = weekRange(this.sel);
+      return sel.s.getTime() === curr.s.getTime();
+    },
+    wkRides: function() {
+      var r = weekRange(this.sel);
+      return filterInRange(rides, r.s, r.e);
+    },
+    wkInc: function() {
+      var r = weekRange(this.sel);
+      var arr = filterInRange(inc, r.s, r.e);
+      var inn = arr.filter(function(x){ return x.type === 'in'; }).reduce(function(s, x){ return s + x.amt; }, 0);
+      var out = arr.filter(function(x){ return x.type === 'out'; }).reduce(function(s, x){ return s + x.amt; }, 0);
+      var by = {};
+      arr.filter(function(x){ return x.type === 'out'; }).forEach(function(x) {
+        by[x.cat] = (by[x.cat] || 0) + x.amt;
+      });
+      return { in: inn, out: out, by: by };
+    },
+    pickups: function() {
+      return this.wkRides.filter(function(x){ return x.type === 'up'; });
+    },
+    trips: function() {
+      var up = this.wkRides.filter(function(x){ return x.type === 'up'; }).length;
+      var down = this.wkRides.filter(function(x){ return x.type === 'down'; }).length;
+      return Math.min(up, down);
+    },
+    hrly: function() {
+      var h = new Array(24).fill(0);
+      this.wkRides.filter(function(x){ return x.type === 'up'; }).forEach(function(x) {
+        h[new Date(x.time).getHours()]++;
+      });
+      return h;
+    },
+    peaks: function() {
+      var self = this;
+      return self.hrly.map(function(v, i){ return { i: i, v: v }; })
+        .filter(function(x){ return x.v > 0; })
+        .sort(function(a, b){ return b.v - a.v; })
+        .slice(0, 3)
+        .map(function(x){ return x.i + ':00'; });
+    },
+    maxHr: function() { return Math.max.apply(null, this.hrly.concat([1])); },
+    maxExp: function() { return Math.max.apply(null, Object.values(this.wkInc.by).concat([1])); }
+  },
+  mounted: function() {
+    var self = this;
+    setTimeout(function() { self.initHeatmap(); }, 700);
+  },
+  beforeUnmount: function() {
+    if (this.hmMap) { this.hmMap.destroy(); this.hmMap = null; }
+  },
+  methods: {
+    chWeek: function(d) {
+      var v = new Date(this.sel);
+      v.setDate(v.getDate() + d * 7);
+      this.sel = v;
+    },
+    barH: function(v) {
+      return (4 + (v / this.maxHr) * 44) + 'px';
+    },
+    expW: function(v) {
+      return Math.min(100, (v / this.maxExp) * 100) + '%';
+    },
+    initHeatmap: function() {
+      var self = this;
+      var el = document.getElementById('hm-box');
+      if (!el || typeof AMap === 'undefined') return;
+      var center = self.pickups.length
+        ? [self.pickups[0].lng, self.pickups[0].lat]
+        : [116.397428, 39.90923];
+      self.hmMap = new AMap.Map('hm-box', { zoom: 12, center: center });
+      AMap.plugin('AMap.Heatmap', function() {
+        self.hm = new AMap.Heatmap(self.hmMap, { radius: 25, opacity: [0.4, 0.8] });
+        self.loadHeatmap();
+      });
+    },
+    loadHeatmap: function() {
+      var self = this;
+      if (!self.hm || !self.pickups.length) return;
+      self.hm.setDataSet({
+        data: self.pickups.map(function(r) { return { lng: r.lng, lat: r.lat, weight: 1 }; })
+      });
+    }
+  },
+  watch: {
+    pickups: function() {
+      var self = this;
+      if (self.hm) self.loadHeatmap();
+    }
   }
 };
 
-// ==================== App ====================
-const routes=[
-  {path:'/',component:MapPage},
-  {path:'/hist',component:HistPage},
-  {path:'/inc',component:IncPage},
-  {path:'/stat',component:StatPage},
+// ==================== 路由 & App ====================
+var routes = [
+  { path: '/', component: MapPage },
+  { path: '/hist', component: HistPage },
+  { path: '/inc', component: IncPage },
+  { path: '/stat', component: StatPage }
 ];
-const router=VueRouter.createRouter({history:VueRouter.createWebHashHistory(),routes});
-const App={
-  router,
-  template:`
-<router-view class="page-view"></router-view>
-<nav class="tab-bar">
-  <div class="tab-item" :class="{on:$route.path==='/'}" @click="$router.push('/')"><span class="tab-icon">📍</span><span class="tab-label">记录</span></div>
-  <div class="tab-item" :class="{on:$route.path==='/hist'}" @click="$router.push('/hist')"><span class="tab-icon">📋</span><span class="tab-label">历史</span></div>
-  <div class="tab-item" :class="{on:$route.path==='/inc'}" @click="$router.push('/inc')"><span class="tab-icon">💰</span><span class="tab-label">收支</span></div>
-  <div class="tab-item" :class="{on:$route.path==='/stat'}" @click="$router.push('/stat')"><span class="tab-icon">📊</span><span class="tab-label">统计</span></div>
-</nav>`
-};
-Vue.createApp(App).use(router).mount('#app');
+
+var router = VueRouter.createRouter({
+  history: VueRouter.createWebHashHistory(),
+  routes: routes
+});
+
+var app = Vue.createApp({
+  data: function() {
+    return { currentPath: '/' };
+  },
+  router: router,
+  mounted: function() {
+    var self = this;
+    this.$router.afterEach(function(to) {
+      self.currentPath = to.path;
+    });
+    this.currentPath = this.$route.path;
+  },
+  template: '\
+<router-view class="page"></router-view>\
+<nav class="tab-bar">\
+  <div class="tab-item" v-bind:class="{active: currentPath === \'/'}'}" v-on:click="go(\'/\')"><span class="tab-icon">📍</span><span class="tab-label">记录</span></div>\
+  <div class="tab-item" v-bind:class="{active: currentPath === \'/hist\'}" v-on:click="go(\'/hist\')"><span class="tab-icon">📋</span><span class="tab-label">历史</span></div>\
+  <div class="tab-item" v-bind:class="{active: currentPath === \'/inc\'}" v-on:click="go(\'/inc\')"><span class="tab-icon">💰</span><span class="tab-label">收支</span></div>\
+  <div class="tab-item" v-bind:class="{active: currentPath === \'/stat\'}" v-on:click="go(\'/stat\')"><span class="tab-icon">📊</span><span class="tab-label">统计</span></div>\
+</nav>',
+  methods: {
+    go: function(path) {
+      this.$router.push(path);
+    }
+  }
+});
+
+app.use(router);
+app.mount('#app');
 
 })();
 </script>
