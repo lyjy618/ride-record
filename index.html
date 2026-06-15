@@ -295,6 +295,14 @@
           <div class="form-label">备注（可选）</div>
           <input v-model="modalNote" class="form-input" placeholder="如：乘客说去三里屯" />
         </div>
+        <!-- 下车时显示订单金额 -->
+        <div class="form-row" v-if="modalType==='down'">
+          <div class="form-label">💰 订单金额（自动记入流水）</div>
+          <div style="display:flex;align-items:center;background:#f6ffed;border:1.5px solid #b7eb8f;border-radius:10px;padding:4px 12px">
+            <span style="font-size:22px;font-weight:700;color:#52c41a">¥</span>
+            <input v-model="modalAmount" type="number" placeholder="0.00" step="0.01" style="flex:1;font-size:22px;font-weight:700;border:none;outline:none;margin-left:6px;background:transparent;padding:8px 0" />
+          </div>
+        </div>
       </div>
 
       <div class="modal-confirm">
@@ -342,6 +350,7 @@
         modalDate: fmtDate(now()),
         modalTime: fmtTimeFull(now()),
         modalNote: '',
+        modalAmount: '',
         // 地图选点
         inputMode: 'map', // 'map' | 'manual'
         pickedAddr: '',
@@ -489,6 +498,7 @@
         self.modalType = type;
         self.modalAddr = '';
         self.modalNote = '';
+        self.modalAmount = '';
         self.modalDate = fmtDate(now());
         self.modalTime = fmtTimeFull(now());
         self.pickedAddr = '';
@@ -600,6 +610,23 @@
         }
         rides.unshift(record);
         saveAll();
+
+        // 下车时自动添加流水
+        if (this.modalType === 'down' && this.modalAmount) {
+          var amtVal = parseFloat(this.modalAmount);
+          if (amtVal > 0) {
+            inc.unshift({
+              id: Date.now(),
+              cat: '流水',
+              amt: amtVal,
+              note: '订单：' + this.modalAddr,
+              time: dateTime.toISOString(),
+              type: 'in'
+            });
+            saveAll();
+          }
+        }
+
         this.showModal = false;
         if (this.pickMapObj) {
           try { this.pickMapObj.destroy(); } catch(e){}
