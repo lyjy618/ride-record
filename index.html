@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>跑车记录 - 网约车司机工作助手</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue',sans-serif;background:#f5f5f5;user-select:none}
+    #app{display:flex;flex-direction:column;min-height:100vh;max-width:480px;margin:0 auto}
+    .page{flex:1;overflow-y:auto;padding-bottom:70px}
+    .bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:58px;background:#fff;border-top:1px solid #eee;display:flex;justify-content:space-around;align-items:center;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+    .nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;color:#999;font-size:10px;cursor:pointer;text-decoration:none;transition:color .2s}
+    .nav-item.on{color:#1677ff}
+    .nav-icon{font-size:22px}.nav-label{font-size:10px}
+    .map-page{position:relative;width:100%;height:100vh}
+    .map-container{width:100%;height:100%}
+    .map-loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:#999;font-size:14px;z-index:5}
+    .map-loading-icon{font-size:32px;margin-bottom:8px;animation:spin 1s linear infinite}
+    @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+    .status-bar{position:absolute;top:env(safe-area-inset-top,12px);left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.96);border-radius:20px;padding:7px 16px;display:flex;align-items:center;gap:8px;font-size:13px;box-shadow:0 2px 12px rgba(0,0,0,0.12);z-index:10;white-space:nowrap;padding-top:12px}
+    .status-dot{width:8px;height:8px;border-radius:50%;background:#ccc;flex-shrink:0}
+    .status-dot.ok{background:#52c41a}.status-dot.locating{background:#faad14;animation:pulse 1s infinite}.status-dot.err{background:#ff4d4f}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+    .today-count{margin-left:8px;border-left:1px solid #eee;padding-left:8px;color:#1677ff;font-weight:600}
+    .address-card{position:absolute;top:75px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.96);border-radius:10px;padding:8px 14px;display:flex;align-items:center;gap:6px;font-size:12px;color:#333;max-width:90%;box-shadow:0 2px 8px rgba(0,0,0,0.1);z-index:10}
+    .address-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:280px}
+    .btn-group{position:absolute;bottom:80px;left:50%;transform:translateX(-50%);display:flex;gap:14px;z-index:10}
+    .btn{border:none;border-radius:16px;font-size:14px;font-weight:600;color:#fff;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.2);display:flex;flex-direction:column;align-items:center;justify-content:center;width:125px;height:85px;transition:transform .15s,opacity .15s}
+    .btn:active:not(:disabled){transform:scale(.94)}.btn:disabled{opacity:.45;cursor:not-allowed}
+    .btn-pickup{background:linear-gradient(135deg,#52c41a,#73d13d)}
+    .btn-dropoff{background:linear-gradient(135deg,#ff4d4f,#ff7875)}
+    .btn small{font-size:10px;font-weight:400;opacity:.8;margin-top:3px}
+    .toast{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.75);color:#fff;padding:12px 26px;border-radius:10px;font-size:15px;z-index:200;pointer-events:none;white-space:nowrap}
+    .fade-enter-active,.fade-leave-active{transition:opacity .3s}.fade-enter-from,.fade-leave-to{opacity:0}
+    .history{padding:16px}
+    .date-nav{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:14px}
+    .date-btn{background:#1677ff;color:#fff;border:none;border-radius:50%;width:34px;height:34px;font-size:13px;cursor:pointer}
+    .date-btn:disabled{background:#ccc;cursor:not-allowed}
+    .date-display{font-size:16px;font-weight:600;min-width:100px;text-align:center}
+    .summary-card{background:#fff;border-radius:12px;padding:16px;display:flex;justify-content:space-around;align-items:center;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+    .summary-item{display:flex;flex-direction:column;align-items:center;gap:4px}
+    .summary-num{font-size:28px;font-weight:700}
+    .summary-label{font-size:11px;color:#888}
+    .summary-divider{width:1px;height:40px;background:#eee}
+    .record-list{display:flex;flex-direction:column;gap:10px}
+    .record-item{background:#fff;border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+    .record-icon{font-size:26px;flex-shrink:0}
+    .record-info{flex:1;min-width:0}
+    .record-type{font-size:14px;font-weight:600;color:#333}
+    .record-address{font-size:12px;color:#888;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px}
+    .record-time{font-size:11px;color:#bbb;margin-top:2px}
+    .delete-btn{background:none;border:none;color:#ccc;font-size:18px;cursor:pointer;padding:4px;flex-shrink:0}
+    .empty-state{text-align:center;padding:60px 20px;color:#bbb}
+    .empty-icon{font-size:48px;margin-bottom:14px}.empty-text{font-size:16px;margin-bottom:8px}.empty-hint{font-size:12px}
+    .income{padding:16px}
+    .income-summary{background:linear-gradient(135deg,#1677ff,#5aa9ff);border-radius:16px;padding:20px;color:#fff;margin-bottom:14px}
+    .summary-header{font-size:13px;opacity:.8;margin-bottom:12px}
+    .summary-row{display:flex;justify-content:space-between}
+    .summary-col{display:flex;flex-direction:column;gap:4px}
+    .summary-label-sm{font-size:11px;opacity:.7}
+    .summary-value{font-size:20px;font-weight:700}
+    .income-color{color:#b7eb8f}.expense-color{color:#ff9999}
+    .section-title{font-size:13px;font-weight:600;color:#333;margin-bottom:10px}
+    .add-form{background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+    .cat-tabs{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
+    .cat-tab{background:#fff;border:1.5px solid #ddd;border-radius:16px;padding:4px 12px;font-size:12px;cursor:pointer;white-space:nowrap}
+    .cat-tab.on{border-color:#1677ff;color:#1677ff;background:#e6f4ff}
+    .cat-tab.expense-tab{border-color:#ff4d4f;color:#ff4d4f}
+    .cat-tab.expense-tab.on{border-color:#ff4d4f;color:#ff4d4f;background:#fff1f0}
+    .amount-row{display:flex;align-items:center;margin-bottom:10px}
+    .amount-prefix{font-size:20px;color:#888;margin-right:8px;font-weight:700}
+    .amount-input{flex:1;font-size:24px;font-weight:700;border:none;outline:none;color:#333;background:transparent}
+    .note-input{width:100%;border:1px solid #eee;border-radius:8px;padding:9px 12px;font-size:13px;margin-bottom:12px}
+    .submit-btn{width:100%;background:#1677ff;color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:600;cursor:pointer}
+    .submit-btn:disabled{background:#ccc;cursor:not-allowed}
+    .quick-btns{display:flex;gap:10px;margin-bottom:14px}
+    .quick-btn{flex:1;background:#fff;border:1px solid #eee;border-radius:10px;padding:10px 4px;font-size:13px;font-weight:600;color:#ff4d4f;cursor:pointer;text-align:center}
+    .quick-btn small{font-size:11px;font-weight:400;color:#999;display:block;margin-top:1px}
+    .record-list2{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+    .record-row2{display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid #f5f5f5;gap:8px}
+    .record-row2:last-child{border-bottom:none}
+    .record-info2{flex:1}
+    .record-cat2{font-size:13px;font-weight:600;color:#333}
+    .record-note2{font-size:11px;color:#999;margin-top:1px}
+    .record-time2{font-size:11px;color:#bbb;margin-top:1px}
+    .record-amount2{font-size:15px;font-weight:700}
+    .del-btn2{background:none;border:none;color:#ccc;cursor:pointer;font-size:15px;padding:4px}
+    .empty{text-align:center;color:#ccc;padding:30px;font-size:14px}
+    .stats{padding:16px}
+    .week-summary{background:linear-gradient(135deg,#141c28,#1e3a5f);border-radius:16px;padding:20px;margin-bottom:14px}
+    .week-title{color:rgba(255,255,255,.6);font-size:12px;margin-bottom:14px}
+    .week-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .stat-card{background:rgba(255,255,255,.08);border-radius:10px;padding:13px;text-align:center}
+    .stat-icon{font-size:20px;margin-bottom:3px}
+    .stat-num{font-size:22px;font-weight:700;color:#fff}
+    .stat-label{font-size:10px;color:rgba(255,255,255,.5);margin-top:2px}
+    .section-card{background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+    .section-card-title{font-size:13px;font-weight:600;color:#333;margin-bottom:12px}
+    .peak-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+    .peak-tag{background:#e6f4ff;color:#1677ff;border-radius:12px;padding:4px 12px;font-size:13px;font-weight:600}
+    .empty-hint2{color:#bbb;font-size:12px}
+    .hour-chart{display:flex;align-items:flex-end;gap:2px;height:60px;padding-bottom:20px;position:relative}
+    .hour-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+    .hour-bar{width:100%;background:linear-gradient(to top,#1677ff,#69b1ff);border-radius:2px 2px 0 0;min-height:3px;transition:height .3s}
+    .hour-label{position:absolute;bottom:-18px;font-size:9px;color:#bbb}
+    .chart-x{text-align:center;font-size:10px;color:#ccc;margin-top:4px}
+    .expense-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+    .expense-cat2{font-size:13px;color:#888;min-width:55px}
+    .expense-bar-wrap{flex:1;height:8px;background:#f5f5f5;border-radius:4px;overflow:hidden}
+    .expense-bar2{height:100%;background:#ff7875;border-radius:4px;transition:width .3s}
+    .expense-val2{font-size:13px;font-weight:600;color:#ff4d4f;min-width:48px;text-align:right}
+    .heatmap-map{width:100%;height:260px;border-radius:10px;overflow:hidden;background:#f0f0f0}
+    .heatmap-hint{font-size:12px;color:#bbb;text-align:center;padding:12px}
+    .week-nav{display:flex;justify-content:space-between;margin-top:8px}
+    .week-nav-btn{background:#fff;border:1px solid #ddd;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;color:#333}
+    .week-nav-btn:disabled{color:#ccc;cursor:not-allowed}
+    @supports(padding-bottom:env(safe-area-inset-bottom)){.page{padding-bottom:calc(70px + env(safe-area-inset-bottom))}}
+  </style>
+</head>
+<body>
+<div id="app"></div>
+
+<script src="https://webapi.amap.com/maps?v=2.0&key=59b217300fed74cf72a4090b12cca4b3"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@3.4.0/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue-router@4.2.5/dist/vue-router.global.prod.js"></script>
+<script>
+// ==================== 全局响应式数据（核心修复：Vue Ref 驱动，实时更新） ====================
+const { ref, computed, reactive, watch, onMounted, onUnmounted } = Vue;
+
+const state = Vue.reactive({
+  rides: JSON.parse(localStorage.getItem('h5_rides') || '[]'),
+  income: JSON.parse(localStorage.getItem('h5_income') || '[]'),
+});
+function saveRides() { localStorage.setItem('h5_rides', JSON.stringify(state.rides)); }
+function saveIncome() { localStorage.setItem('h5_income', JSON.stringify(state.income)); }
+function addRide(type, pos, addr) {
+  state.rides.unshift({ id: Date.now(), type, lat: pos.lat, lng: pos.lng, address: addr || '未知位置', time: new Date().toISOString() });
+  saveRides();
+}
+function delRide(id) { state.rides = state.rides.filter(r => r.id !== id); saveRides(); }
+function addIncome(cat, amt, note) {
+  state.income.unshift({ id: Date.now(), category: cat, amount: parseFloat(amt), note, time: new Date().toISOString(), type: cat === '流水' ? 'income' : 'expense' });
+  saveIncome();
+}
+function delIncome(id) { state.income = state.income.filter(r => r.id !== id); saveIncome(); }
+
+// 工具
+function getWeekRange(d) {
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const start = new Date(d); start.setDate(diff); start.setHours(0,0,0,0);
+  const end = new Date(start); end.setDate(start.getDate() + 6); end.setHours(23,59,59,999);
+  return { start, end };
+}
+function getDayRange(d) {
+  const start = new Date(d); start.setHours(0,0,0,0);
+  const end = new Date(d); end.setHours(23,59,59,999);
+  return { start, end };
+}
+function filterByRange(arr, start, end) {
+  return arr.filter(r => { const t = new Date(r.time); return t >= start && t <= end; });
+}
+
+// ==================== 地图页 ====================
+const MapPage = {
+  template: `
+    <div class="map-page">
+      <div id="amap-map" class="map-container"></div>
+      <div class="map-loading" v-if="mapLoading">
+        <div class="map-loading-icon">🗺</div>
+        <div>地图加载中...</div>
+      </div>
+      <div class="map-loading" v-if="mapError">
+        <div class="map-loading-icon">⚠️</div>
+        <div>地图加载失败</div>
+        <div style="font-size:12px;margin-top:4px">{{ mapError }}</div>
+        <button @click="retryMap" style="margin-top:10px;background:#1677ff;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer">重试</button>
+      </div>
+      <div class="status-bar">
+        <div class="status-dot" :class="locating ? 'locating' : (pos ? 'ok' : 'err')"></div>
+        <span>{{ locating ? '定位中...' : (pos ? '定位成功' : '定位失败') }}</span>
+        <span class="today-count">今日 {{ todayCount }} 单</span>
+      </div>
+      <div class="address-card" v-if="address">
+        <span>📍</span><span class="address-text">{{ address }}</span>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-pickup" @click="record('pickup')" :disabled="!pos || rec">
+          <span>🚗 乘客上车</span><small>记录接单位置</small>
+        </button>
+        <button class="btn btn-dropoff" @click="record('dropoff')" :disabled="!pos || rec">
+          <span>🏁 乘客下车</span><small>记录到达位置</small>
+        </button>
+      </div>
+      <transition name="fade"><div class="toast" v-if="msg">{{ msg }}</div></transition>
+    </div>
+  `,
+  setup() {
+    const pos = ref(null);
+    const address = ref('');
+    const locating = ref(true);
+    const rec = ref(false);
+    const msg = ref('');
+    const mapLoading = ref(true);
+    const mapError = ref('');
+    let map = null;
+    let geo = null;
+    let posMarker = null;
+    let rideMarkers = [];
+    let retryTimer = null;
+
+    const todayCount = computed(() => {
+      const { start, end } = getDayRange(new Date());
+      return filterByRange(state.rides, start, end).length;
+    });
+
+    function toast(m) { msg.value = m; setTimeout(() => { msg.value = ''; }, 2000); }
+
+    function buildMap() {
+      if (typeof AMap === 'undefined') {
+        mapError.value = '高德地图 SDK 未加载，请检查网络';
+        mapLoading.value = false;
+        return;
+      }
+      mapLoading.value = true;
+      mapError.value = '';
+      try {
+        map = new AMap.Map('amap-map', {
+          zoom: 16,
+          center: [116.397428, 39.90923],
+          viewMode: '2D',
+          resizeEnable: true,
+        });
+        map.on('complete', () => { mapLoading.value = false; });
+        AMap.plugin('AMap.Geolocation', () => {
+          geo = new AMap.Geolocation({ enableHighAccuracy: true, timeout: 10000, showButton: false });
+          map.addControl(geo);
+          geo.getCurrentPosition((s, r) => {
+            locating.value = false;
+            if (s === 'complete') {
+              setPos(r.position);
+            }
+          });
+        });
+        AMap.plugin('AMap.Geocoder', () => {});
+        // 渲染今日已有标记
+        const { start, end } = getDayRange(new Date());
+        filterByRange(state.rides, start, end).forEach(r => addRideMarker(r, r.type));
+      } catch (e) {
+        mapError.value = e.message || '未知错误';
+        mapLoading.value = false;
+      }
+    }
+
+    function retryMap() { mapLoading.value = true; mapError.value = ''; setTimeout(buildMap, 300); }
+
+    function setPos(lnglat) {
+      pos.value = { lng: lnglat.lng, lat: lnglat.lat };
+      map.setCenter([lnglat.lng, lnglat.lat]);
+      if (posMarker) map.remove(posMarker);
+      posMarker = new AMap.Marker({
+        position: [lnglat.lng, lnglat.lat],
+        content: '<div style="width:18px;height:18px;background:#1677ff;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(22,119,255,0.5)"></div>',
+        offset: new AMap.Pixel(-9, -9)
+      });
+      map.add(posMarker);
+      new AMap.Geocoder().getAddress([lnglat.lng, lnglat.lat], (s, r) => {
+        if (s === 'complete') address.value = r.regeocode.formattedAddress;
+      });
+    }
+
+    function addRideMarker(p, type) {
+      const icon = type === 'pickup'
+        ? '<div style="width:28px;height:28px;background:#52c41a;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center"><span style="transform:rotate(45deg);font-size:14px">🚗</span></div>'
+        : '<div style="width:28px;height:28px;background:#ff4d4f;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center"><span style="transform:rotate(45deg);font-size:14px">🏁</span></div>';
+      const m = new AMap.Marker({ position: [p.lng, p.lat], content: icon, offset: new AMap.Pixel(-14, -28) });
+      map.add(m);
+      rideMarkers.push(m);
+    }
+
+    async function record(type) {
+      if (!pos.value) return;
+      rec.value = true;
+      try {
+        if (geo) {
+          await new Promise(res => geo.getCurrentPosition((s, r) => { if (s === 'complete') setPos(r.position); res(); }));
+        }
+        addRide(type, pos.value, address.value);
+        addRideMarker(pos.value, type);
+        toast(type === 'pickup' ? '✅ 上车位置已记录' : '🏁 下车位置已记录');
+      } finally { rec.value = false; }
+    }
+
+    onMounted(() => {
+      retryTimer = setTimeout(buildMap, 600);
+    });
+    onUnmounted(() => { clearTimeout(retryTimer); if (map) map.destroy(); });
+
+    return { pos, address, locating, rec, msg, mapLoading, mapError, todayCount, record, retryMap };
+  }
+};
+
+// ==================== 历史页 ====================
+const HistoryPage = {
+  template: `
+    <div class="history page">
+      <div class="date-nav">
+        <button class="date-btn" @click="ch(-1)">◀</button>
+        <div class="date-display">{{ disp }}</div>
+        <button class="date-btn" @click="ch(1)" :disabled="isToday">▶</button>
+      </div>
+      <div class="summary-card">
+        <div class="summary-item"><span class="summary-num" style="color:#52c41a">{{ pu }}</span><span class="summary-label">上车</span></div>
+        <div class="summary-divider"></div>
+        <div class="summary-item"><span class="summary-num" style="color:#ff4d4f">{{ do_ }}</span><span class="summary-label">下车</span></div>
+        <div class="summary-divider"></div>
+        <div class="summary-item"><span class="summary-num" style="color:#1677ff">{{ Math.min(pu, do_) }}</span><span class="summary-label">完成</span></div>
+      </div>
+      <div class="record-list" v-if="recs.length">
+        <div v-for="r in recs" :key="r.id" class="record-item">
+          <div class="record-icon">{{ r.type === 'pickup' ? '🚗' : '🏁' }}</div>
+          <div class="record-info">
+            <div class="record-type">{{ r.type === 'pickup' ? '乘客上车' : '乘客下车' }}</div>
+            <div class="record-address">{{ r.address }}</div>
+            <div class="record-time">{{ fmt(r.time) }}</div>
+          </div>
+          <button class="delete-btn" @click="del(r.id)">✕</button>
+        </div>
+      </div>
+      <div class="empty-state" v-else>
+        <div class="empty-icon">📋</div><div class="empty-text">当日暂无记录</div><div class="empty-hint">在「记录」页面点击按钮即可记录</div>
+      </div>
+    </div>
+  `,
+  setup() {
+    const sel = ref(new Date());
+    const disp = computed(() => {
+      const d = sel.value, t = new Date();
+      const y = new Date(t); y.setDate(t.getDate() - 1);
+      if (d.toDateString() === t.toDateString()) return '今天';
+      if (d.toDateString() === y.toDateString()) return '昨天';
+      return `${d.getMonth()+1}月${d.getDate()}日`;
+    });
+    const isToday = computed(() => sel.value.toDateString() === new Date().toDateString());
+    const recs = computed(() => {
+      const { start, end } = getDayRange(sel.value);
+      return filterByRange(state.rides, start, end);
+    });
+    const pu = computed(() => recs.value.filter(r => r.type === 'pickup').length);
+    const do_ = computed(() => recs.value.filter(r => r.type === 'dropoff').length);
+    function ch(delta) { const d = new Date(sel.value); d.setDate(d.getDate() + delta); if (d <= new Date()) sel.value = d; }
+    function fmt(s) { const d = new Date(s); return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:${d.getSeconds().toString().padStart(2,'0')}`; }
+    function del(id) { if (confirm('删除此记录？')) delRide(id); }
+    return { sel, disp, isToday, recs, pu, do_, ch, fmt, del };
+  }
+};
+
+// ==================== 收支页 ====================
+const IncomePage = {
+  template: `
+    <div class="income page">
+      <div class="income-summary">
+        <div class="summary-header">💰 今日收支</div>
+        <div class="summary-row">
+          <div class="summary-col"><div class="summary-label-sm">流水</div><div class="summary-value income-color">+¥{{ di.income.toFixed(2) }}</div></div>
+          <div class="summary-col"><div class="summary-label-sm">支出</div><div class="summary-value expense-color">-¥{{ di.expense.toFixed(2) }}</div></div>
+          <div class="summary-col"><div class="summary-label-sm">净赚</div><div class="summary-value" :class="di.profit>=0?'income-color':'expense-color'">{{ di.profit>=0?'+':'-' }}¥{{ Math.abs(di.profit).toFixed(2) }}</div></div>
+        </div>
+      </div>
+      <div class="add-form">
+        <div class="section-title">📝 记一笔</div>
+        <div class="cat-tabs">
+          <button v-for="c in cats" :key="c.v" class="cat-tab" :class="{ on: form.cat === c.v, 'expense-tab': c.t === 'exp' }" @click="form.cat = c.v">{{ c.l }}</button>
+        </div>
+        <div class="amount-row"><span class="amount-prefix">¥</span><input class="amount-input" v-model="form.amt" type="number" placeholder="0.00" step="0.01" /></div>
+        <input class="note-input" v-model="form.note" placeholder="备注（可选）" />
+        <button class="submit-btn" @click="submit" :disabled="!form.amt">记一笔</button>
+      </div>
+      <div class="quick-btns">
+        <button v-for="q in quicks" :key="q.v" class="quick-btn" @click="quick(q.v, q.a)">{{ q.l }}<small>¥{{ q.a }}</small></button>
+      </div>
+      <div class="section-title" style="margin-top:8px">📋 今日记录（实时）</div>
+      <div class="record-list2" v-if="recs.length">
+        <div v-for="r in recs" :key="r.id" class="record-row2">
+          <div class="record-info2">
+            <div class="record-cat2">{{ r.category }}</div>
+            <div class="record-note2" v-if="r.note">{{ r.note }}</div>
+            <div class="record-time2">{{ ft(r.time) }}</div>
+          </div>
+          <div class="record-amount2" :style="{ color: r.type === 'income' ? '#52c41a' : '#ff4d4f' }">{{ r.type === 'income' ? '+' : '-' }}¥{{ r.amount.toFixed(2) }}</div>
+          <button class="del-btn2" @click="del(r.id)">✕</button>
+        </div>
+      </div>
+      <div class="empty" v-else>暂无记录，记一笔吧</div>
+    </div>
+  `,
+  setup() {
+    const cats = [
+      { l: '💰 流水', v: '流水', t: 'inc' },
+      { l: '🔌 充电', v: '充电费', t: 'exp' },
+      { l: '🍜 餐费', v: '餐费', t: 'exp' },
+      { l: '🎫 免佣', v: '免佣卡', t: 'exp' },
+      { l: '🅿️ 停车', v: '停车费', t: 'exp' },
+      { l: '📦 其他', v: '其他', t: 'exp' },
+    ];
+    const quicks = [
+      { l: '充电', v: '充电费', a: 50 },
+      { l: '餐费', v: '餐费', a: 30 },
+      { l: '停车', v: '停车费', a: 10 },
+      { l: '免佣', v: '免佣卡', a: 20 },
+    ];
+    const form = reactive({ cat: '流水', amt: '', note: '' });
+    const di = computed(() => {
+      const { start, end } = getDayRange(new Date());
+      const arr = filterByRange(state.income, start, end);
+      const income = arr.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0);
+      const expense = arr.filter(r => r.type === 'expense').reduce((s, r) => s + r.amount, 0);
+      return { income, expense, profit: income - expense };
+    });
+    const recs = computed(() => {
+      const { start, end } = getDayRange(new Date());
+      return filterByRange(state.income, start, end);
+    });
+    function submit() { if (!form.amt) return; addIncome(form.cat, form.amt, form.note); form.amt = ''; form.note = ''; }
+    function quick(v, a) { addIncome(v, a, ''); }
+    function ft(s) { const d = new Date(s); return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`; }
+    function del(id) { if (confirm('删除？')) delIncome(id); }
+    return { cats, quicks, form, di, recs, submit, quick, ft, del };
+  }
+};
+
+// ==================== 统计页 ====================
+const StatsPage = {
+  template: `
+    <div class="stats page">
+      <div class="week-summary">
+        <div class="week-title">📅 {{ wl }}</div>
+        <div class="week-grid">
+          <div class="stat-card"><div class="stat-icon">🚗</div><div class="stat-num">{{ totalTrips }}</div><div class="stat-label">完成单</div></div>
+          <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-num" style="color:#b7eb8f">¥{{ wi.income.toFixed(0) }}</div><div class="stat-label">流水</div></div>
+          <div class="stat-card"><div class="stat-icon">📉</div><div class="stat-num" style="color:#ff7875">¥{{ wi.expense.toFixed(0) }}</div><div class="stat-label">支出</div></div>
+          <div class="stat-card"><div class="stat-icon">🏆</div><div class="stat-num" :style="{ color: wi.profit >= 0 ? '#b7eb8f' : '#ff7875' }">¥{{ wi.profit.toFixed(0) }}</div><div class="stat-label">净赚</div></div>
+        </div>
+      </div>
+      <div class="section-card">
+        <div class="section-card-title">⏰ 高峰接单时段</div>
+        <div class="peak-tags">
+          <span class="peak-tag" v-for="h in peakHours" :key="h">{{ h }}</span>
+          <span class="empty-hint2" v-if="!peakHours.length">数据不足，继续记录吧</span>
+        </div>
+        <div class="hour-chart">
+          <div v-for="(v, i) in hourly" :key="i" class="hour-bar-wrap" :title="i+':00 '+v+'单'">
+            <div class="hour-bar" :style="{ height: barH(v) }"></div>
+            <div class="hour-label" v-if="i%4===0">{{ i }}</div>
+          </div>
+        </div>
+        <div class="chart-x">0 ──────────────────────────────────── 23</div>
+      </div>
+      <div class="section-card" v-if="Object.keys(wi.byCat).length">
+        <div class="section-card-title">💸 支出分类</div>
+        <div v-for="(v, c) in wi.byCat" :key="c" class="expense-row">
+          <span class="expense-cat2">{{ c }}</span>
+          <div class="expense-bar-wrap"><div class="expense-bar2" :style="{ width: expW(v) }"></div></div>
+          <span class="expense-val2">¥{{ v.toFixed(0) }}</span>
+        </div>
+      </div>
+      <div class="section-card">
+        <div class="section-card-title">🔥 上车热力图（本周）</div>
+        <div id="heatmap-box" class="heatmap-map"></div>
+        <div class="heatmap-hint" v-if="pickups.length === 0">记录足够多上车位置后自动生成热力图</div>
+      </div>
+      <div class="week-nav">
+        <button class="week-nav-btn" @click="wkCh(-1)">◀ 上周</button>
+        <button class="week-nav-btn" @click="wkCh(1)" :disabled="isCW">下周 ▶</button>
+      </div>
+    </div>
+  `,
+  setup() {
+    const sel = ref(new Date());
+    const wl = computed(() => { const { start, end } = getWeekRange(sel.value); return `${start.getMonth()+1}/${start.getDate()} - ${end.getMonth()+1}/${end.getDate()}`; });
+    const isCW = computed(() => {
+      const { start, end } = getWeekRange(new Date());
+      const { start: s, end: e } = getWeekRange(sel.value);
+      return s.getTime() === start.getTime();
+    });
+    function wkCh(d) { const v = new Date(sel.value); v.setDate(v.getDate() + d * 7); sel.value = v; }
+
+    const wr = computed(() => {
+      const { start, end } = getWeekRange(sel.value);
+      return filterByRange(state.rides, start, end);
+    });
+    const wi = computed(() => {
+      const { start, end } = getWeekRange(sel.value);
+      const arr = filterByRange(state.income, start, end);
+      const income = arr.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0);
+      const expense = arr.filter(r => r.type === 'expense').reduce((s, r) => s + r.amount, 0);
+      const byCat = {};
+      arr.filter(r => r.type === 'expense').forEach(r => { byCat[r.category] = (byCat[r.category] || 0) + r.amount; });
+      return { income, expense, profit: income - expense, byCat };
+    });
+    const pickups = computed(() => wr.value.filter(r => r.type === 'pickup'));
+    const totalTrips = computed(() => Math.min(wr.value.filter(r => r.type === 'pickup').length, wr.value.filter(r => r.type === 'dropoff').length));
+    const hourly = computed(() => {
+      const h = new Array(24).fill(0);
+      wr.value.filter(r => r.type === 'pickup').forEach(r => { h[new Date(r.time).getHours()]++; });
+      return h;
+    });
+    const peakHours = computed(() => hourly.value.map((v, i) => ({ h: i, v })).filter(x => x.v > 0).sort((a, b) => b.v - a.v).slice(0, 3).map(x => `${x.h}:00`));
+    const mx = computed(() => Math.max(...hourly.value, 1));
+    function barH(v) { return `${4 + (v / mx.value) * 44}px`; }
+    const mxE = computed(() => Math.max(...Object.values(wi.value.byCat), 1));
+    function expW(v) { return `${Math.min(100, (v / mxE.value) * 100)}%`; }
+
+    let hmMap = null, hmIns = null;
+    function initHM() {
+      const box = document.getElementById('heatmap-box');
+      if (!box || typeof AMap === 'undefined') return;
+      hmMap = new AMap.Map('heatmap-box', { zoom: 12, center: pickups.value.length ? [pickups.value[0].lng, pickups.value[0].lat] : [116.397428, 39.90923] });
+      AMap.plugin('AMap.Heatmap', () => {
+        hmIns = new AMap.Heatmap(hmMap, { radius: 25, opacity: [0.4, 0.8] });
+        updateHM();
+      });
+    }
+    function updateHM() {
+      if (!hmIns || !pickups.value.length) return;
+      hmIns.setDataSet({ data: pickups.value.map(r => ({ lng: r.lng, lat: r.lat, weight: 1 })) });
+    }
+    onMounted(() => { setTimeout(initHM, 600); });
+    watch(pickups, updateHM);
+    onUnmounted(() => { if (hmMap) hmMap.destroy(); });
+
+    return { sel, wl, isCW, wkCh, wr, wi, pickups, totalTrips, hourly, peakHours, barH, expW };
+  }
+};
+
+// ==================== App ====================
+const routes = [
+  { path: '/', component: MapPage },
+  { path: '/history', component: HistoryPage },
+  { path: '/income', component: IncomePage },
+  { path: '/stats', component: StatsPage },
+];
+const router = createRouter({ history: createWebHashHistory(), routes });
+const App = {
+  router,
+  template: `
+    <router-view class="page" />
+    <nav class="bottom-nav">
+      <router-link to="/" class="nav-item" :class="{ on: $route.path === '/' }">
+        <span class="nav-icon">📍</span><span class="nav-label">记录</span>
+      </router-link>
+      <router-link to="/history" class="nav-item" :class="{ on: $route.path === '/history' }">
+        <span class="nav-icon">📋</span><span class="nav-label">历史</span>
+      </router-link>
+      <router-link to="/income" class="nav-item" :class="{ on: $route.path === '/income' }">
+        <span class="nav-icon">💰</span><span class="nav-label">收支</span>
+      </router-link>
+      <router-link to="/stats" class="nav-item" :class="{ on: $route.path === '/stats' }">
+        <span class="nav-icon">📊</span><span class="nav-label">统计</span>
+      </router-link>
+    </nav>
+  `,
+};
+createApp(App).use(router).mount('#app');
+</script>
+</body>
+</html>
