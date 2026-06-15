@@ -3,38 +3,68 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>跑车记录 - 测试版</title>
+  <title>跑车记录 - 手动记录版</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f0f2f5}
-    #app{min-width:320px;max-width:480px;margin:0 auto;min-height:100vh;padding-bottom:60px}
+    #app{min-width:320px;max-width:480px;margin:0 auto;min-height:100vh;padding-bottom:70px}
     .page{padding:16px;padding-bottom:70px}
-    .tab-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:56px;background:#fff;border-top:1px solid #eee;display:flex}
+    .tab-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:56px;background:#fff;border-top:1px solid #eee;display:flex;z-index:100}
     .tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#999;font-size:10px;cursor:pointer}
     .tab-item.active{color:#1677ff}
-    .debug{background:#fff;margin:16px;border-radius:12px;padding:16px;font-size:13px}
-    .debug-title{font-weight:bold;margin-bottom:8px}
-    .debug-item{margin:4px 0;padding:4px 8px;background:#f5f5f5;border-radius:4px}
-    .err-box{background:#fff1f0;border:1px solid #ffccc7;margin:16px;border-radius:12px;padding:16px;color:#ff4d4f;font-size:13px}
-    .btn{border:none;border-radius:10px;padding:12px 20px;font-size:14px;font-weight:600;cursor:pointer;margin:4px}
+    .btn{border:none;border-radius:10px;padding:12px 20px;font-size:14px;font-weight:600;cursor:pointer}
     .btn-blue{background:#1677ff;color:#fff}
     .btn-green{background:#52c41a;color:#fff}
-    .inc-card{background:linear-gradient(135deg,#1677ff,#5294e8);border-radius:16px;padding:18px 20px;color:#fff;margin:16px}
-    .cat-row{display:flex;flex-wrap:wrap;gap:7px;margin:12px 16px}
+    .btn-red{background:#ff4d4f;color:#fff}
+    .btn-gray{background:#f5f5f5;color:#666}
+    .rec-btn{border:none;border-radius:16px;font-size:14px;font-weight:600;color:#fff;cursor:pointer;padding:14px 20px;width:calc(50% - 12px)}
+    .btn-up{background:linear-gradient(135deg,#52c41a,#73d13d)}
+    .btn-down{background:linear-gradient(135deg,#ff4d4f,#ff7875)}
+    .empty-state{text-align:center;padding:32px;color:#999}
+    /* 模态框 */
+    .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:1000;padding:16px}
+    .modal-box{background:#fff;border-radius:16px;padding:24px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto}
+    .modal-title{font-size:18px;font-weight:700;margin-bottom:20px;text-align:center}
+    .modal-row{margin-bottom:16px}
+    .modal-label{font-size:13px;color:#666;margin-bottom:6px}
+    .modal-input{width:100%;border:1.5px solid #e0e0e0;border-radius:10px;padding:12px;font-size:15px;box-sizing:border-box}
+    .modal-input:focus{border-color:#1677ff;outline:none}
+    .modal-time{display:flex;gap:8px}
+    .modal-time input{flex:1;border:1.5px solid #e0e0e0;border-radius:10px;padding:12px;font-size:15px;box-sizing:border-box}
+    .modal-btns{display:flex;gap:10px;margin-top:20px}
+    .modal-btns button{flex:1;padding:14px;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer}
+    /* 收支卡片 */
+    .inc-card{background:linear-gradient(135deg,#1677ff,#5294e8);border-radius:16px;padding:18px 20px;color:#fff;margin-bottom:14px}
+    .cat-row{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
     .cat-pill{background:#fff;border:1.5px solid #e0e0e0;border-radius:16px;padding:5px 12px;font-size:12px;cursor:pointer}
     .cat-pill.on-inc{border-color:#52c41a;color:#52c41a;background:#f6ffed}
     .cat-pill.on-exp{border-color:#ff4d4f;color:#ff4d4f;background:#fff1f0}
-    .inc-list{background:#fff;margin:16px;border-radius:12px;overflow:hidden}
+    .inc-list{background:#fff;border-radius:12px;overflow:hidden;margin-bottom:14px}
     .inc-row{display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid #f5f5f5;gap:10px}
     .inc-row:last-child{border-bottom:none}
     .inc-body{flex:1}
     .inc-amt{font-size:15px;font-weight:700;color:#52c41a}
     .inc-amt.red{color:#ff4d4f}
-    .map-box{width:100%;height:300px;background:#e8eaf0;margin:16px;border-radius:12px}
-    .rec-btn{border:none;border-radius:16px;font-size:14px;font-weight:600;color:#fff;cursor:pointer;padding:12px 24px;margin:8px}
-    .btn-up{background:#52c41a}
-    .btn-down{background:#ff4d4f}
-    .empty-state{text-align:center;padding:32px;color:#999}
+    /* 统计 */
+    .wk-card{background:linear-gradient(135deg,#141c28,#1e3a5f);border-radius:16px;padding:18px 16px;margin-bottom:14px}
+    .wk-card .ci{background:rgba(255,255,255,.07);border-radius:10px;padding:12px 8px;text-align:center}
+    .wk-card .ci-num{font-size:22px;font-weight:700;color:#fff}
+    .wk-card .ci-lbl{font-size:10px;color:rgba(255,255,255,.45);margin-top:2px}
+    /* 快捷按钮 */
+    .quick-row{display:flex;gap:8px;margin-bottom:14px}
+    .quick-btn{flex:1;background:#fff;border:1px solid #eee;border-radius:10px;padding:10px 4px;font-size:13px;font-weight:600;color:#ff4d4f;cursor:pointer;text-align:center;line-height:1.3}
+    .quick-btn small{display:block;font-size:11px;font-weight:400;color:#999;margin-top:1px}
+    /* 历史 */
+    .day-stat{background:#fff;border-radius:12px;padding:14px;display:flex;justify-content:space-around;margin-bottom:14px}
+    .day-stat .num{font-size:24px;font-weight:700}
+    .day-stat .lbl{font-size:11px;color:#888}
+    .rec-card{background:#fff;border-radius:12px;padding:12px;display:flex;align-items:center;gap:10px;margin-bottom:8px}
+    .rec-card .icon{font-size:24px}
+    .rec-card .body{flex:1}
+    .rec-card .kind{font-size:14px;font-weight:600}
+    .rec-card .addr{font-size:12px;color:#888;margin-top:2px}
+    .rec-card .time{font-size:11px;color:#bbb;margin-top:2px}
+    .rec-card .del{background:none;border:none;color:#ccc;font-size:16px;cursor:pointer;padding:4px}
   </style>
 </head>
 <body>
@@ -55,54 +85,65 @@
     </div>
   </div>
 
-  <!-- 调试信息 -->
-  <div class="debug" v-if="tab==='debug'">
-    <div class="debug-title">🔧 调试信息</div>
-    <div class="debug-item">vueLoaded: {{ vueLoaded }}</div>
-    <div class="debug-item">amapLoaded: {{ amapLoaded }}</div>
-    <div class="debug-item">position: {{ JSON.stringify(position) }}</div>
-    <div class="debug-item">地址: {{ address }}</div>
-    <div class="debug-item"> rides: {{ rides.length }} 条</div>
-    <div class="debug-item"> inc: {{ inc.length }} 条</div>
-    <button class="btn btn-blue" v-on:click="forceInit">重新初始化</button>
-  </div>
-
-  <!-- 地图页 -->
+  <!-- ========== 记录页 ========== -->
   <div v-if="tab==='map'" class="page">
-    <div id="map-container" class="map-box"></div>
-    <div style="padding:8px 16px;font-size:13px;color:#666">
-      <span style="color:#52c41a">●</span> {{ address || '定位中...' }}
-    </div>
-    <div style="text-align:center;margin-top:8px">
-      <button class="rec-btn btn-up" v-on:click="addRide('up')" v-bind:disabled="!position">🚗 乘客上车</button>
-      <button class="rec-btn btn-down" v-on:click="addRide('down')" v-bind:disabled="!position">🏁 乘客下车</button>
-    </div>
-    <div v-if="lastMsg" style="text-align:center;margin-top:12px;color:#52c41a;font-size:14px">{{ lastMsg }}</div>
-  </div>
-
-  <!-- 历史页 -->
-  <div v-if="tab==='hist'" class="page">
-    <div class="debug-title" style="margin:0 0 12px;font-size:16px">📋 历史记录</div>
-    <div style="display:flex;justify-content:space-around;background:#fff;padding:12px;border-radius:12px;margin-bottom:12px">
-      <div style="text-align:center"><div style="font-size:22px;font-weight:bold;color:#52c41a">{{ todayUp }}</div><div style="font-size:11px;color:#888">上车</div></div>
-      <div style="text-align:center"><div style="font-size:22px;font-weight:bold;color:#ff4d4f">{{ todayDown }}</div><div style="font-size:11px;color:#888">下车</div></div>
-      <div style="text-align:center"><div style="font-size:22px;font-weight:bold;color:#1677ff">{{ Math.min(todayUp, todayDown) }}</div><div style="font-size:11px;color:#888">完成</div></div>
-    </div>
-    <div v-if="todayRides.length">
-      <div v-for="r in todayRides" :key="r.id" style="background:#fff;padding:12px;border-radius:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px">
-        <span style="font-size:24px">{{ r.type==='up'?'🚗':'🏁' }}</span>
-        <div style="flex:1">
-          <div style="font-size:14px;font-weight:600">{{ r.type==='up'?'上车':'下车' }}</div>
-          <div style="font-size:12px;color:#888">{{ r.addr }}</div>
-          <div style="font-size:11px;color:#bbb">{{ fmtTime(r.time) }}</div>
-        </div>
-        <button v-on:click="delRide(r.id)" style="background:none;border:none;color:#ccc;font-size:16px;cursor:pointer">✕</button>
+    <div style="background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;text-align:center">
+      <div style="font-size:16px;font-weight:700;margin-bottom:4px">🚗 跑车记录</div>
+      <div style="font-size:12px;color:#999;margin-bottom:16px">手动记录上下车位置和时间</div>
+      <div style="display:flex;gap:12px">
+        <button class="rec-btn btn-up" v-on:click="openModal('up')">🚗 乘客上车</button>
+        <button class="rec-btn btn-down" v-on:click="openModal('down')">🏁 乘客下车</button>
       </div>
     </div>
-    <div v-else class="empty-state">暂无记录</div>
+    
+    <div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px">📍 今日记录 ({{ todayRides.length }} 条)</div>
+      <div v-if="todayRides.length">
+        <div v-for="r in todayRides" :key="r.id" class="rec-card">
+          <div class="icon">{{ r.type==='up'?'🚗':'🏁' }}</div>
+          <div class="body">
+            <div class="kind">{{ r.type==='up'?'上车':'下车' }}</div>
+            <div class="addr">{{ r.addr }}</div>
+            <div class="time">{{ fmtTime(r.time) }}</div>
+          </div>
+          <button class="del" v-on:click="delRide(r.id)">✕</button>
+        </div>
+      </div>
+      <div v-else class="empty-state">暂无记录，点击上方按钮开始记录</div>
+    </div>
+
+    <div v-if="lastMsg" style="background:#52c41a;color:#fff;text-align:center;padding:12px;border-radius:10px;font-size:14px">{{ lastMsg }}</div>
   </div>
 
-  <!-- 收支页 -->
+  <!-- ========== 历史页 ========== -->
+  <div v-if="tab==='hist'" class="page">
+    <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:14px">
+      <button class="btn btn-gray" v-on:click="chDay(-1)" style="padding:8px 12px;font-size:13px">◀</button>
+      <div style="font-size:16px;font-weight:600;min-width:100px;text-align:center">{{ dayLabel }}</div>
+      <button class="btn btn-gray" v-on:click="chDay(1)" v-bind:disabled="isToday" style="padding:8px 12px;font-size:13px">▶</button>
+    </div>
+    <div class="day-stat">
+      <div style="text-align:center"><div class="num" style="color:#52c41a">{{ dayUp }}</div><div class="lbl">上车</div></div>
+      <div style="width:1px;background:#eee"></div>
+      <div style="text-align:center"><div class="num" style="color:#ff4d4f">{{ dayDown }}</div><div class="lbl">下车</div></div>
+      <div style="width:1px;background:#eee"></div>
+      <div style="text-align:center"><div class="num" style="color:#1677ff">{{ Math.min(dayUp, dayDown) }}</div><div class="lbl">完成</div></div>
+    </div>
+    <div v-if="dayRides.length">
+      <div v-for="r in dayRides" :key="r.id" class="rec-card">
+        <div class="icon">{{ r.type==='up'?'🚗':'🏁' }}</div>
+        <div class="body">
+          <div class="kind">{{ r.type==='up'?'上车':'下车' }}</div>
+          <div class="addr">{{ r.addr }}</div>
+          <div class="time">{{ fmtTime(r.time) }}</div>
+        </div>
+        <button class="del" v-on:click="delRide(r.id)">✕</button>
+      </div>
+    </div>
+    <div v-else class="empty-state">当日暂无记录</div>
+  </div>
+
+  <!-- ========== 收支页 ========== -->
   <div v-if="tab==='inc'" class="page">
     <div class="inc-card">
       <div style="font-size:12px;opacity:0.8;margin-bottom:10px">💰 今日收支</div>
@@ -112,22 +153,25 @@
         <div><div style="font-size:11px;opacity:0.7">净赚</div><div style="font-size:20px;font-weight:700" v-bind:style="{color: dayInc.in-dayInc.out>=0?'#b7eb8f':'#ff9999'}">{{ dayInc.in-dayInc.out>=0?'+':'-' }}¥{{ Math.abs(dayInc.in-dayInc.out).toFixed(2) }}</div></div>
       </div>
     </div>
-    <div style="font-size:13px;font-weight:600;margin:12px 16px">📝 记一笔</div>
-    <div class="cat-row">
-      <div v-for="c in cats" :key="c.v" class="cat-pill" v-bind:class="form.cat===c.v?(c.t==='in'?'on-inc':'on-exp'):''" v-on:click="form.cat=c.v">{{ c.l }}</div>
-    </div>
-    <div style="background:#fff;margin:0 16px 12px;border-radius:12px;padding:16px">
+
+    <div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px">📝 记一笔</div>
+      <div class="cat-row">
+        <div v-for="c in cats" :key="c.v" class="cat-pill" v-bind:class="form.cat===c.v?(c.t==='in'?'on-inc':'on-exp'):''" v-on:click="form.cat=c.v">{{ c.l }}</div>
+      </div>
       <div style="display:flex;align-items:center;margin-bottom:12px">
         <span style="font-size:22px;font-weight:700;color:#888">¥</span>
-        <input v-model="form.amt" type="number" placeholder="0.00" step="0.01" style="flex:1;font-size:26px;font-weight:700;border:none;outline:none;margin-left:6px" />
+        <input v-model="form.amt" type="number" placeholder="0.00" step="0.01" style="flex:1;font-size:26px;font-weight:700;border:none;outline:none;margin-left:6px;background:transparent" />
       </div>
-      <input v-model="form.note" placeholder="备注（可选）" style="width:100%;border:1px solid #eee;border-radius:8px;padding:9px 12px;font-size:13px;margin-bottom:12px;box-sizing:border-box" />
+      <input v-model="form.note" placeholder="备注（可选）" style="width:100%;border:1px solid #eee;border-radius:8px;padding:10px 12px;font-size:14px;margin-bottom:12px;box-sizing:border-box" />
       <button class="btn btn-blue" style="width:100%;padding:13px" v-on:click="addInc" v-bind:disabled="!form.amt">记一笔</button>
     </div>
-    <div style="display:flex;gap:8px;margin:0 16px 14px">
-      <button v-for="q in quicks" :key="q.v" v-on:click="quickAdd(q.v,q.a)" style="flex:1;background:#fff;border:1px solid #eee;border-radius:10px;padding:10px 4px;font-size:13px;font-weight:600;color:#ff4d4f;cursor:pointer">{{ q.l }}<br><small style="font-size:11px;font-weight:400;color:#999">¥{{ q.a }}</small></button>
+
+    <div class="quick-row">
+      <button v-for="q in quicks" :key="q.v" class="quick-btn" v-on:click="quickAdd(q.v,q.a)">{{ q.l }}<br><small>¥{{ q.a }}</small></button>
     </div>
-    <div class="inc-list">
+
+    <div class="inc-list" style="padding:0 16px">
       <div v-for="r in todayInc" :key="r.id" class="inc-row">
         <div class="inc-body">
           <div style="font-size:13px;font-weight:600">{{ r.cat }}</div>
@@ -141,74 +185,85 @@
     </div>
   </div>
 
-  <!-- 统计页 -->
+  <!-- ========== 统计页 ========== -->
   <div v-if="tab==='stat'" class="page">
-    <div style="background:linear-gradient(135deg,#141c28,#1e3a5f);border-radius:16px;padding:18px 16px;margin-bottom:14px">
+    <div class="wk-card">
       <div style="color:rgba(255,255,255,.55);font-size:12px;margin-bottom:14px">📅 本周 {{ wkLabel }}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div style="background:rgba(255,255,255,.07);border-radius:10px;padding:12px 8px;text-align:center">
-          <div style="font-size:20px;margin-bottom:2px">🚗</div>
-          <div style="font-size:22px;font-weight:700;color:#fff">{{ trips }}</div>
-          <div style="font-size:10px;color:rgba(255,255,255,.45)">完成单</div>
-        </div>
-        <div style="background:rgba(255,255,255,.07);border-radius:10px;padding:12px 8px;text-align:center">
-          <div style="font-size:20px;margin-bottom:2px">💰</div>
-          <div style="font-size:22px;font-weight:700;color:#b7eb8f">¥{{ wkInc.in.toFixed(0) }}</div>
-          <div style="font-size:10px;color:rgba(255,255,255,.45)">流水</div>
-        </div>
-        <div style="background:rgba(255,255,255,.07);border-radius:10px;padding:12px 8px;text-align:center">
-          <div style="font-size:20px;margin-bottom:2px">📉</div>
-          <div style="font-size:22px;font-weight:700;color:#ff7875">¥{{ wkInc.out.toFixed(0) }}</div>
-          <div style="font-size:10px;color:rgba(255,255,255,.45)">支出</div>
-        </div>
-        <div style="background:rgba(255,255,255,.07);border-radius:10px;padding:12px 8px;text-align:center">
-          <div style="font-size:20px;margin-bottom:2px">🏆</div>
-          <div style="font-size:22px;font-weight:700" v-bind:style="{color: wkInc.in-wkInc.out>=0?'#b7eb8f':'#ff7875'}">¥{{ (wkInc.in-wkInc.out).toFixed(0) }}</div>
-          <div style="font-size:10px;color:rgba(255,255,255,.45)">净赚</div>
-        </div>
+        <div class="ci"><div class="ci-num">{{ trips }}</div><div class="ci-lbl">完成单</div></div>
+        <div class="ci"><div class="ci-num" style="color:#b7eb8f">¥{{ wkInc.in.toFixed(0) }}</div><div class="ci-lbl">流水</div></div>
+        <div class="ci"><div class="ci-num" style="color:#ff7875">¥{{ wkInc.out.toFixed(0) }}</div><div class="ci-lbl">支出</div></div>
+        <div class="ci"><div class="ci-num" v-bind:style="{color: wkInc.in-wkInc.out>=0?'#b7eb8f':'#ff7875'}">¥{{ (wkInc.in-wkInc.out).toFixed(0) }}</div><div class="ci-lbl">净赚</div></div>
       </div>
     </div>
+
     <div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:14px">
-      <div style="font-size:13px;font-weight:600;margin-bottom:10px">⏰ 高峰时段</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px">⏰ 高峰时段（上车）</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
         <span v-for="h in peaks" :key="h" style="background:#e6f4ff;color:#1677ff;border-radius:12px;padding:4px 12px;font-size:13px;font-weight:600">{{ h }}</span>
         <span v-if="!peaks.length" style="font-size:12px;color:#bbb">记录更多数据</span>
       </div>
       <div style="display:flex;align-items:flex-end;gap:2px;height:56px;padding-bottom:18px;position:relative">
         <div v-for="(v,i) in hrly" :key="i" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%">
-          <div v-bind:style="{width:'100%',height: barH(v),background:'linear-gradient(to top,#1677ff,#69b1ff)',borderRadius:'2px 2px 0 0',transition:'height .3s',minHeight:'3px'}"></div>
+          <div v-bind:style="{width:'100%',height:barH(v),background:'linear-gradient(to top,#1677ff,#69b1ff)',borderRadius:'2px 2px 0 0',minHeight:'3px',transition:'height .3s'}"></div>
         </div>
       </div>
       <div style="text-align:center;font-size:10px;color:#ccc">0 ─────────────────────────────── 23</div>
     </div>
+
     <div v-if="Object.keys(wkExp).length" style="background:#fff;border-radius:12px;padding:16px;margin-bottom:14px">
       <div style="font-size:13px;font-weight:600;margin-bottom:10px">💸 支出分类</div>
       <div v-for="(v,c) in wkExp" :key="c" style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
         <span style="font-size:13px;color:#888;min-width:52px">{{ c }}</span>
         <div style="flex:1;height:8px;background:#f5f5f5;border-radius:4px;overflow:hidden">
-          <div v-bind:style="{width: expW(v),height:'100%',background:'#ff7875',borderRadius:'4px',transition:'width .3s'}"></div>
+          <div v-bind:style="{width:expW(v),height:'100%',background:'#ff7875',borderRadius:'4px',transition:'width .3s'}"></div>
         </div>
         <span style="font-size:13px;font-weight:600;color:#ff4d4f;min-width:48px;text-align:right">¥{{ v.toFixed(0) }}</span>
       </div>
     </div>
-    <div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:14px">
-      <div style="font-size:13px;font-weight:600;margin-bottom:10px">🔥 上车热力图（本周）</div>
-      <div id="heat-box" style="width:100%;height:260px;border-radius:10px;background:#f0f0f0"></div>
-      <div v-if="!pickups.length" style="font-size:12px;color:#bbb;text-align:center;padding:10px">记录更多上车位置后自动生成</div>
-    </div>
+
     <div style="display:flex;justify-content:space-between">
       <button v-on:click="chWeek(-1)" style="background:#fff;border:1px solid #ddd;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer">◀ 上周</button>
-      <button v-on:click="chWeek(1)" v-bind:disabled="isCurrWk" style="background:#fff;border:1px solid #ddd;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer" v-bind:style="isCurrWk?{color:'#ccc',cursor:'not-allowed'}:{}">下周 ▶</button>
+      <button v-on:click="chWeek(1)" v-bind:disabled="isCurrWk" style="background:#fff;border:1px solid #ddd;border-radius:8px;padding:8px 16px;font-size:13px" v-bind:style="isCurrWk?{color:'#ccc',cursor:'not-allowed'}:{}">下周 ▶</button>
+    </div>
+  </div>
+
+  <!-- ========== 模态框 ========== -->
+  <div class="modal" v-if="showModal" v-on:click.self="showModal=false">
+    <div class="modal-box">
+      <div class="modal-title">{{ modalType==='up'?'🚗 记录上车':'🏁 记录下车' }}</div>
+      
+      <div class="modal-row">
+        <div class="modal-label">地址 / 位置描述</div>
+        <input v-model="modalAddr" class="modal-input" placeholder="如：朝阳大悦城门口、地铁站A口" />
+      </div>
+      
+      <div class="modal-row">
+        <div class="modal-label">时间</div>
+        <div class="modal-time">
+          <input v-model="modalDate" type="date" style="flex:1.2" />
+          <input v-model="modalTime" type="time" style="flex:1" />
+        </div>
+      </div>
+
+      <div class="modal-row">
+        <div class="modal-label">备注（可选）</div>
+        <input v-model="modalNote" class="modal-input" placeholder="如：乘客说去三里屯" />
+      </div>
+
+      <div class="modal-btns">
+        <button v-on:click="showModal=false" style="background:#f5f5f5;color:#666">取消</button>
+        <button v-on:click="confirmAdd" v-bind:disabled="!modalAddr" style="background:#1677ff;color:#fff">确认记录</button>
+      </div>
     </div>
   </div>
 </div>
 
-<script src="https://webapi.amap.com/maps?v=2.0&key=59b217300fed74cf72a4090b12cca4b3"></script>
 <script src="https://cdn.jsdelivr.net/npm/vue@3.4.0/dist/vue.global.prod.js"></script>
 <script>
 (function(){
-  var LS_R = 'h5_r_v3';
-  var LS_I = 'h5_i_v3';
+  var LS_R = 'h5_r_v5';
+  var LS_I = 'h5_i_v5';
 
   var rides = JSON.parse(localStorage.getItem(LS_R) || '[]');
   var inc = JSON.parse(localStorage.getItem(LS_I) || '[]');
@@ -218,22 +273,27 @@
     localStorage.setItem(LS_I, JSON.stringify(inc));
   }
 
+  function now() { return new Date(); }
+  function fmtDate(d) {
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function fmtTimeFull(d) {
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ':' + String(d.getSeconds()).padStart(2,'0');
+  }
+
   var app = Vue.createApp({
     data: function() {
       return {
         tab: 'map',
-        vueLoaded: typeof Vue !== 'undefined',
-        amapLoaded: typeof AMap !== 'undefined',
-        position: null,
-        address: '',
         lastMsg: '',
-        mapObj: null,
-        geoObj: null,
-        markerMe: null,
-        markers: [],
-        heatmap: null,
-        heatmapMap: null,
-        selWeek: new Date(),
+        // 模态框
+        showModal: false,
+        modalType: 'up',
+        modalAddr: '',
+        modalDate: fmtDate(now()),
+        modalTime: fmtTimeFull(now()).substring(0,5),
+        modalNote: '',
+        // 收支表单
         form: { cat: '流水', amt: '', note: '' },
         cats: [
           { l: '💰 流水', v: '流水', t: 'in' },
@@ -248,43 +308,49 @@
           { l: '餐费', v: '餐费', a: 30 },
           { l: '停车', v: '停车', a: 10 },
           { l: '免佣', v: '免佣卡', a: 20 }
-        ]
+        ],
+        // 历史选择
+        selDay: new Date()
       };
     },
     computed: {
       todayRides: function() {
         return this.getDayRides(new Date());
       },
-      todayUp: function() {
-        return this.todayRides.filter(function(r){ return r.type==='up'; }).length;
+      dayRides: function() {
+        return this.getDayRides(this.selDay);
       },
-      todayDown: function() {
-        return this.todayRides.filter(function(r){ return r.type==='down'; }).length;
-      },
-      todayInc: function() {
-        return this.getDayInc(new Date());
-      },
+      dayUp: function() { return this.dayRides.filter(function(r){ return r.type==='up'; }).length; },
+      dayDown: function() { return this.dayRides.filter(function(r){ return r.type==='down'; }).length; },
+      todayInc: function() { return this.getDayInc(new Date()); },
       dayInc: function() {
         var arr = this.todayInc;
         var inn = arr.filter(function(x){ return x.type==='in'; }).reduce(function(s,x){ return s+x.amt; }, 0);
         var out = arr.filter(function(x){ return x.type==='out'; }).reduce(function(s,x){ return s+x.amt; }, 0);
         return { in: inn, out: out };
       },
+      dayLabel: function() {
+        var d = this.selDay, t = new Date(), y = new Date(t); y.setDate(t.getDate()-1);
+        if (d.toDateString() === t.toDateString()) return '今天';
+        if (d.toDateString() === y.toDateString()) return '昨天';
+        return (d.getMonth()+1)+'月'+d.getDate()+'日';
+      },
+      isToday: function() {
+        return this.selDay.toDateString() === new Date().toDateString();
+      },
       wkLabel: function() {
-        var r = this.getWeekRange(this.selWeek);
+        var r = this.getWeekRange(this.selWeek || new Date());
         return (r.s.getMonth()+1)+'/'+r.s.getDate()+' - '+(r.e.getMonth()+1)+'/'+r.e.getDate();
       },
+      selWeek: function() { return this.selDay; },
       isCurrWk: function() {
         var curr = this.getWeekRange(new Date());
-        var sel = this.getWeekRange(this.selWeek);
+        var sel = this.getWeekRange(this.selDay);
         return sel.s.getTime() === curr.s.getTime();
       },
       wkRides: function() {
-        var r = this.getWeekRange(this.selWeek);
+        var r = this.getWeekRange(this.selDay);
         return this.filterRange(rides, r.s, r.e);
-      },
-      pickups: function() {
-        return this.wkRides.filter(function(x){ return x.type==='up'; });
       },
       trips: function() {
         var up = this.wkRides.filter(function(x){ return x.type==='up'; }).length;
@@ -292,14 +358,14 @@
         return Math.min(up, down);
       },
       wkInc: function() {
-        var r = this.getWeekRange(this.selWeek);
+        var r = this.getWeekRange(this.selDay);
         var arr = this.filterRange(inc, r.s, r.e);
         var inn = arr.filter(function(x){ return x.type==='in'; }).reduce(function(s,x){ return s+x.amt; }, 0);
         var out = arr.filter(function(x){ return x.type==='out'; }).reduce(function(s,x){ return s+x.amt; }, 0);
         return { in: inn, out: out };
       },
       wkExp: function() {
-        var r = this.getWeekRange(this.selWeek);
+        var r = this.getWeekRange(this.selDay);
         var arr = this.filterRange(inc, r.s, r.e).filter(function(x){ return x.type==='out'; });
         var by = {};
         arr.forEach(function(x){ by[x.cat] = (by[x.cat]||0) + x.amt; });
@@ -313,8 +379,7 @@
         return h;
       },
       peaks: function() {
-        var h = this.hrly;
-        return h.map(function(v,i){ return {i:i,v:v}; })
+        return this.hrly.map(function(v,i){ return {i:i,v:v}; })
           .filter(function(x){ return x.v > 0; })
           .sort(function(a,b){ return b.v - a.v; })
           .slice(0,3)
@@ -322,20 +387,6 @@
       },
       maxHr: function() { return Math.max.apply(null, this.hrly.concat([1])); },
       maxExp: function() { return Math.max.apply(null, Object.values(this.wkExp).concat([1])); }
-    },
-    watch: {
-      tab: function(t) {
-        var self = this;
-        if (t === 'stat') {
-          setTimeout(function(){ self.initHeatmap(); }, 500);
-        }
-      }
-    },
-    mounted: function() {
-      var self = this;
-      self.vueLoaded = typeof Vue !== 'undefined';
-      self.amapLoaded = typeof AMap !== 'undefined';
-      setTimeout(function() { self.initMap(); }, 600);
     },
     methods: {
       getDayRides: function(d) {
@@ -365,78 +416,38 @@
         var d = new Date(s);
         return [String(d.getHours()).padStart(2,'0'), String(d.getMinutes()).padStart(2,'0'), String(d.getSeconds()).padStart(2,'0')].join(':');
       },
-      forceInit: function() {
-        this.vueLoaded = typeof Vue !== 'undefined';
-        this.amapLoaded = typeof AMap !== 'undefined';
-        this.initMap();
+      chDay: function(d) {
+        var v = new Date(this.selDay);
+        v.setDate(v.getDate() + d);
+        if (v <= new Date()) this.selDay = v;
       },
-      initMap: function() {
-        var self = this;
-        if (typeof AMap === 'undefined') {
-          setTimeout(function(){ self.initMap(); }, 1000);
-          return;
-        }
-        try {
-          if (!self.mapObj) {
-            self.mapObj = new AMap.Map('map-container', {
-              zoom: 15, center: [116.397428, 39.90923],
-              viewMode: '2D', resizeEnable: true
-            });
-          }
-          AMap.plugin('AMap.Geolocation', function() {
-            if (!self.geoObj) {
-              self.geoObj = new AMap.Geolocation({ enableHighAccuracy: true, timeout: 8000, showButton: false });
-              self.mapObj.addControl(self.geoObj);
-            }
-            self.geoObj.getCurrentPosition(function(status, result) {
-              if (status === 'complete') {
-                self.position = result.position;
-                self.drawMe(result.position);
-                var geocoder = new AMap.Geocoder();
-                geocoder.getAddress([result.position.lng, result.position.lat], function(st, re) {
-                  if (st === 'complete') self.address = re.regeocode.formattedAddress;
-                });
-              }
-            });
-          });
-        } catch(e) {
-          console.error('地图初始化失败:', e);
-        }
+      chWeek: function(d) {
+        var v = new Date(this.selDay);
+        v.setDate(v.getDate() + d * 7);
+        this.selDay = v;
       },
-      drawMe: function(pos) {
-        var self = this;
-        if (!self.mapObj) return;
-        self.mapObj.setCenter([pos.lng, pos.lat]);
-        if (self.markerMe) self.mapObj.remove(self.markerMe);
-        self.markerMe = new AMap.Marker({
-          position: [pos.lng, pos.lat],
-          content: '<div style="width:18px;height:18px;background:#1677ff;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(22,119,255,.5)"></div>',
-          offset: new AMap.Pixel(-9,-9)
-        });
-        self.mapObj.add(self.markerMe);
+      openModal: function(type) {
+        this.modalType = type;
+        this.modalAddr = '';
+        this.modalNote = '';
+        this.modalDate = fmtDate(now());
+        this.modalTime = fmtTimeFull(now()).substring(0,5);
+        this.showModal = true;
       },
-      drawRideMarker: function(pos, type) {
-        var self = this;
-        if (!self.mapObj) return;
-        var ic = type === 'up'
-          ? '<div style="width:28px;height:28px;background:#52c41a;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center"><span style="transform:rotate(45deg);font-size:14px">🚗</span></div>'
-          : '<div style="width:28px;height:28px;background:#ff4d4f;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center"><span style="transform:rotate(45deg);font-size:14px">🏁</span></div>';
-        var m = new AMap.Marker({ position: [pos.lng, pos.lat], content: ic, offset: new AMap.Pixel(-14,-28) });
-        self.mapObj.add(m);
-        self.markers.push(m);
-      },
-      addRide: function(type) {
-        var self = this;
-        if (!self.position) return;
+      confirmAdd: function() {
+        if (!this.modalAddr) return;
+        var dateTime = new Date(this.modalDate + 'T' + this.modalTime + ':00');
         rides.unshift({
-          id: Date.now(), type: type,
-          lat: self.position.lat, lng: self.position.lng,
-          addr: self.address || '未知',
-          time: new Date().toISOString()
+          id: Date.now(),
+          type: this.modalType,
+          addr: this.modalAddr,
+          note: this.modalNote || '',
+          time: dateTime.toISOString()
         });
         saveAll();
-        self.drawRideMarker(self.position, type);
-        self.lastMsg = (type === 'up' ? '✅ 上车' : '🏁 下车') + '已记录';
+        this.showModal = false;
+        this.lastMsg = (this.modalType === 'up' ? '✅ 上车' : '🏁 下车') + '已记录';
+        var self = this;
         setTimeout(function(){ self.lastMsg = ''; }, 2500);
       },
       delRide: function(id) {
@@ -470,34 +481,11 @@
           saveAll();
         }
       },
-      chWeek: function(d) {
-        var v = new Date(this.selWeek);
-        v.setDate(v.getDate() + d * 7);
-        this.selWeek = v;
-      },
       barH: function(v) {
         return (4 + (v / this.maxHr) * 44) + 'px';
       },
       expW: function(v) {
         return Math.min(100, (v / this.maxExp) * 100) + '%';
-      },
-      initHeatmap: function() {
-        var self = this;
-        var el = document.getElementById('heat-box');
-        if (!el || typeof AMap === 'undefined') return;
-        if (self.heatmapMap) { self.heatmapMap.destroy(); }
-        var center = self.pickups.length
-          ? [self.pickups[0].lng, self.pickups[0].lat]
-          : [116.397428, 39.90923];
-        self.heatmapMap = new AMap.Map('heat-box', { zoom: 12, center: center });
-        AMap.plugin('AMap.Heatmap', function() {
-          self.heatmap = new AMap.Heatmap(self.heatmapMap, { radius: 25, opacity: [0.4, 0.8] });
-          if (self.pickups.length) {
-            self.heatmap.setDataSet({
-              data: self.pickups.map(function(r){ return { lng: r.lng, lat: r.lat, weight: 1 }; })
-            });
-          }
-        });
       }
     }
   });
